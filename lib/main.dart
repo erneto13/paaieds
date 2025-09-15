@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paaieds/screens/home/home.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,11 +11,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'My App',
-      home: Scaffold(
-        appBar: AppBar(title: Text('My App')),
-        body: Center(child: Text('Hello, World!')),
+      title: 'Material App',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData.dark(useMaterial3: true).copyWith(
+        textTheme: Typography().black.apply(fontFamily: 'DinNextRounded'),
       ),
+      home: const PageHome(),
     );
   }
 }
