@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:paaieds/screens/home/home.dart';
+// Asegúrate de importar tu nueva pantalla de bienvenida
+import 'package:paaieds/ui/screens/auth/welcome_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,12 +12,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Material App',
+      title: 'TWORD',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(useMaterial3: true).copyWith(
-        textTheme: Typography().black.apply(fontFamily: 'DinNextRounded'),
+        textTheme: Typography().white.apply(fontFamily: 'DinNextRounded'),
+        scaffoldBackgroundColor: const Color(0xFF131F24),
       ),
-      home: const PageHome(),
+      home: const WelcomeScreen(),
     );
   }
 }
