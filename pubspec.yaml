@@ -31,9 +31,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter:
     sdk: flutter
+  flutter_dotenv: ^6.0.0
   flutter_svg: ^2.2.1
-  font_awesome_flutter: ^10.7.0 # Para los íconos de redes sociales
-  google_fonts: ^6.2.1         # Para la fuente del logo "TWORD"
+  font_awesome_flutter: ^10.7.0
+  google_fonts: ^6.2.1
+  http: ^1.5.0
 
 dev_dependencies:
   flutter_lints: ^5.0.0

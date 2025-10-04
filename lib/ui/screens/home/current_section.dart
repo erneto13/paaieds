@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:paaieds/screens/home/section.dart';
+import 'package:paaieds/ui/screens/home/section.dart';
 
 class CurrentSection extends StatelessWidget {
   final SectionData data;

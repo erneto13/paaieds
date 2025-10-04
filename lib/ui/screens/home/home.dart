@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:paaieds/screens/home/current_section.dart';
-import 'package:paaieds/screens/home/section.dart';
+import 'package:paaieds/ui/screens/home/current_section.dart';
+import 'package:paaieds/ui/screens/home/section.dart';
 
 Color _darkenColor(Color color, double factor) {
   return HSLColor.fromColor(color)
