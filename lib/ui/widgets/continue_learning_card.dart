@@ -2,23 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:paaieds/core/models/course.dart'; // Si usas el modelo
 
 class ContinueLearningCard extends StatelessWidget {
-  final Course course;
 
-  const ContinueLearningCard({super.key, required this.course});
+  const ContinueLearningCard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: course.color,
+        color: Colors.red,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            course.title,
+            "course.title",
             style: const TextStyle(
               color: Colors.white,
               fontSize: 24,
@@ -27,7 +26,7 @@ class ContinueLearningCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            course.chapter,
+            "course.chapter",
             style: TextStyle(
               color: Colors.white.withOpacity(0.8),
               fontSize: 16,
@@ -38,14 +37,14 @@ class ContinueLearningCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Autor: ${course.author}',
+                'Autor: da',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 14,
                 ),
               ),
               Text(
-                '${(course.progress * 100).toInt()}% completado',
+                '${(1 * 100).toInt()}% completado',
                 style: TextStyle(
                   color: Colors.white.withOpacity(0.8),
                   fontSize: 14,
@@ -55,7 +54,7 @@ class ContinueLearningCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
-            value: course.progress,
+            value: 100,
             backgroundColor: Colors.white.withOpacity(0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             borderRadius: BorderRadius.circular(10),

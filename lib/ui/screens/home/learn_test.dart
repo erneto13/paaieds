@@ -1,11 +1,11 @@
 import 'dart:convert';
-
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:paaieds/ui/screens/main_app/test_screen.dart';
 import 'package:paaieds/ui/widgets/gradient_text.dart';
-import 'gemini_service.dart';
+import '../../../api/gemini_service.dart';
+
 class LearnTestScreen extends StatefulWidget {
   const LearnTestScreen({super.key});
 

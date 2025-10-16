@@ -19,11 +19,7 @@ class WelcomeScreen extends StatelessWidget {
             children: [
               const Spacer(flex: 2),
               // Puedes reemplazar este Icon por tu propia imagen o logo
-              const Icon(
-                Icons.code_rounded,
-                size: 150,
-                color: Colors.white,
-              ),
+              const Icon(Icons.code_rounded, size: 150, color: Colors.white),
               const SizedBox(height: 24),
               const Text(
                 'Bienvenido a TWORD',
@@ -49,7 +45,9 @@ class WelcomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
+                    ),
                   );
                 },
               ),
@@ -60,7 +58,9 @@ class WelcomeScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const RegisterScreen(),
+                    ),
                   );
                 },
               ),
