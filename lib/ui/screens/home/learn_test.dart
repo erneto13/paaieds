@@ -1,10 +1,14 @@
-import 'dart:convert';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/ui/screens/main_app/test_screen.dart';
+import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
 import 'package:paaieds/ui/widgets/gradient_text.dart';
+import 'package:paaieds/util/json_parser.dart';
 import '../../../api/gemini_service.dart';
+import '../../widgets/custom_app_bar.dart';
+import '../../widgets/test_preview_card.dart';
 
 class LearnTestScreen extends StatefulWidget {
   const LearnTestScreen({super.key});
@@ -18,6 +22,7 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
   final GeminiService _geminiService = GeminiService();
   bool _loading = false;
   Map<String, dynamic>? _parsedJson;
+  int _selectedIndex = 0;
 
   Future<void> _generateTest() async {
     final topic = _controller.text.trim();
@@ -28,10 +33,29 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
       _parsedJson = null;
     });
 
-    final prompt =
-        '''
+    final prompt = _buildPrompt(topic);
+
+    try {
+      final result = await _geminiService.generateText(prompt);
+      final jsonData = JsonParserUtil.parseJsonFlexible(
+        result,
+        preferredKey: 'preguntas',
+      );
+
+      setState(() {
+        _parsedJson = {"topic": topic, "questions": jsonData};
+      });
+    } catch (e) {
+      _showErrorSnackBar(e.toString());
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  String _buildPrompt(String topic) {
+    return '''
 Genera un cuestionario en formato JSON sobre "$topic".
-Debe tener entre 10 y 15 preguntas.
+Debe tener entre 8 y 10 preguntas.
 La estructura del JSON debe ser un objeto con una clave "preguntas" que contenga una lista de objetos.
 Cada objeto de pregunta debe tener:
 - "question": texto de la pregunta
@@ -39,67 +63,23 @@ Cada objeto de pregunta debe tener:
 - "answer": la respuesta correcta
 No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
 ''';
+  }
 
-    try {
-      final result = await _geminiService.generateText(prompt);
+  void _showErrorSnackBar(String message) {
+    if (!mounted) return;
 
-      String jsonString;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Error al procesar la respuesta: $message"),
+        backgroundColor: AppColors.oceanBlue,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 
-      if (result.contains("```json")) {
-        final startIndex = result.indexOf("```json") + 7;
-        final endIndex = result.lastIndexOf("```");
-        if (endIndex > startIndex) {
-          jsonString = result.substring(startIndex, endIndex);
-        } else {
-          jsonString = result.substring(result.indexOf('{'));
-        }
-      } else if (result.contains("{") || result.contains("[")) {
-        final isArray = result.trim().startsWith('[');
-        final startIndex = isArray ? result.indexOf('[') : result.indexOf('{');
-        final endIndex = isArray
-            ? result.lastIndexOf(']')
-            : result.lastIndexOf('}');
-        if (startIndex != -1 && endIndex != -1) {
-          jsonString = result.substring(startIndex, endIndex + 1);
-        } else {
-          throw const FormatException(
-            "No se encontró un JSON válido en la respuesta.",
-          );
-        }
-      } else {
-        throw const FormatException(
-          "La respuesta no contiene un formato JSON reconocible.",
-        );
-      }
-
-      final jsonData = jsonDecode(jsonString.trim());
-
-      setState(() {
-        if (jsonData is Map<String, dynamic> &&
-            jsonData.containsKey('preguntas')) {
-          _parsedJson = {"topic": topic, "questions": jsonData['preguntas']};
-        } else if (jsonData is List) {
-          _parsedJson = {"topic": topic, "questions": jsonData};
-        } else {
-          throw const FormatException("El formato del JSON no es el esperado.");
-        }
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Error al procesar la respuesta: $e"),
-            backgroundColor: Colors.redAccent,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
-      }
-    } finally {
-      setState(() => _loading = false);
-    }
+  void _onNavBarTap(int index) {
+    setState(() => _selectedIndex = index);
   }
 
   @override
@@ -108,267 +88,203 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
 
     return FadeInUp(
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // ✅ Título con componente GradientText
-                  GradientText(
-                    "¿Qué quieres aprender?",
-                    gradient: const LinearGradient(
-                      colors: [Colors.blueAccent, Colors.lightBlue],
-                    ),
-                    style: GoogleFonts.montserrat(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Input
-                  TextField(
-                    controller: _controller,
-                    enabled: !isDisabled,
-                    style: TextStyle(color: Colors.grey[800]),
-                    decoration: InputDecoration(
-                      hintText: "Ejemplo: Signals en Angular",
-                      hintStyle: TextStyle(color: Colors.grey[400]),
-                      prefixIcon: const Icon(
-                        Icons.school,
-                        color: Colors.blueAccent,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[50],
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 16,
-                        horizontal: 16,
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.blueAccent,
-                          width: 2,
-                        ),
-                      ),
-                      disabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[200]!),
-                      ),
-                    ),
-                    onSubmitted: (value) {
-                      if (!isDisabled && value.isNotEmpty) {
-                        _generateTest();
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 20),
-
-                  // ✅ Botón mejorado
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: isDisabled ? null : _generateTest,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        disabledBackgroundColor: Colors.blueAccent.shade200,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: isDisabled ? 0 : 2,
-                      ),
-                      child: _loading
-                          ? Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2.5,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  "Generando test...",
-                                  style: GoogleFonts.montserrat(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ],
-                            )
-                          : Text(
-                              "Generar Test",
-                              style: GoogleFonts.montserrat(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // ✅ Vista previa del test con animación de salida
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    transitionBuilder: (child, animation) {
-                      return FadeTransition(
-                        opacity: animation,
-                        child: SlideTransition(
-                          position: Tween<Offset>(
-                            begin: const Offset(0, 0.1),
-                            end: Offset.zero,
-                          ).animate(animation),
-                          child: child,
-                        ),
-                      );
-                    },
-                    child: _parsedJson != null
-                        ? _TestPreviewCard(
-                            key: ValueKey(_parsedJson!["topic"]),
-                            parsedJson: _parsedJson!,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ✅ Widget separado para la card de preview
-class _TestPreviewCard extends StatelessWidget {
-  const _TestPreviewCard({super.key, required this.parsedJson});
-
-  final Map<String, dynamic> parsedJson;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Colors.blueAccent.shade700, Colors.blueAccent.shade400],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 12,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        appBar: CustomAppBar(title: "test", onProfileTap: () => {}),
+        backgroundColor: Colors.white10,
+        body: Stack(
           children: [
-            Row(
-              children: [
-                const Icon(Icons.school, color: Colors.white, size: 28),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    parsedJson["topic"],
-                    style: GoogleFonts.montserrat(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ...(parsedJson["questions"] as List)
-                .take(3)
-                .map(
-                  (q) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.circle,
-                          size: 8,
-                          color: Colors.white70,
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _buildAIPoweredLabel(),
+                      const SizedBox(height: 20),
+                      GradientText(
+                        "¿Qué quieres aprender?",
+                        gradient: const LinearGradient(
+                          colors: [AppColors.deepBlue, AppColors.oceanBlue],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            q['question'],
-                            style: GoogleFonts.montserrat(
-                              color: Colors.white,
-                              fontSize: 15,
-                            ),
-                          ),
+                        style: GoogleFonts.montserrat(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 30),
+                      _buildTextField(isDisabled),
+                      const SizedBox(height: 20),
+                      _buildGenerateButton(isDisabled),
+                      const SizedBox(height: 30),
+                      _buildTestPreview(),
+                    ],
                   ),
-                ),
-            if ((parsedJson["questions"] as List).length > 3)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Text(
-                  "...y ${(parsedJson["questions"] as List).length - 3} preguntas más",
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => TestScreen(data: parsedJson),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.play_arrow, color: Colors.white),
-                label: Text(
-                  "Comenzar Test",
-                  style: GoogleFonts.montserrat(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white24,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
                 ),
               ),
             ),
           ],
         ),
+        bottomNavigationBar: CustomBottomNavBar(
+          currentIndex: _selectedIndex,
+          onTap: _onNavBarTap,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(bool isDisabled) {
+    return TextField(
+      controller: _controller,
+      enabled: !isDisabled,
+      style: TextStyle(color: Colors.grey[800]),
+      decoration: InputDecoration(
+        hintText: "Ejemplo: Signals en Angular",
+        hintStyle: TextStyle(color: Colors.grey[400]),
+        prefixIcon: const Icon(Icons.school, color: AppColors.deepBlue),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: AppColors.lightBlue.withValues(alpha: 0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: AppColors.highlight, width: 2),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+      ),
+      onSubmitted: (value) {
+        if (!isDisabled && value.isNotEmpty) {
+          _generateTest();
+        }
+      },
+    );
+  }
+
+  Widget _buildGenerateButton(bool isDisabled) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: isDisabled ? null : _generateTest,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          disabledBackgroundColor: AppColors.lightBlue.withValues(alpha: 0.5),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: isDisabled ? 0 : 2,
+        ),
+        child: _loading
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.5,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    "Generando test...",
+                    style: GoogleFonts.montserrat(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              )
+            : Text(
+                "Generar Test",
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildTestPreview() {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.1),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: _parsedJson != null
+          ? TestPreviewCard(
+              key: ValueKey(_parsedJson!["topic"]),
+              parsedJson: _parsedJson!,
+              onStartTest: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => TestScreen(data: _parsedJson!),
+                  ),
+                );
+              },
+            )
+          : const SizedBox.shrink(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Widget _buildAIPoweredLabel() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.oceanBlue.withValues(alpha: 0.3),
+            AppColors.deepBlue.withValues(alpha: 0.2),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.deepBlue.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.auto_awesome, size: 16, color: AppColors.deepBlue),
+          const SizedBox(width: 6),
+          Text(
+            "Potenciado con IA",
+            style: GoogleFonts.montserrat(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.deepBlue,
+            ),
+          ),
+        ],
       ),
     );
   }
