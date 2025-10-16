@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
@@ -19,27 +20,42 @@ class PrimaryButton extends StatelessWidget {
       height: 50,
       child: isOutlined
           ? OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          side: const BorderSide(color: Colors.white, width: 2),
-        ),
-        child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-      )
+              onPressed: onPressed,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.blueAccent,
+                side: const BorderSide(color: Colors.blueAccent, width: 2),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                ),
+              ),
+              child: Text(
+                text,
+                style: GoogleFonts.montserrat(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            )
           : ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-        ),
-        child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-      ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueAccent,
+                elevation: 4,
+                shadowColor: Colors.blueAccent.withOpacity(0.4),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              onPressed: onPressed,
+              child: Text(
+                text,
+                style: GoogleFonts.montserrat(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+            ),
     );
   }
 }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-// Asegúrate de importar tu nueva pantalla de bienvenida
-import 'package:paaieds/ui/screens/auth/welcome_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:paaieds/ui/screens/auth/login_screen.dart';
 
-void main() {
+void main() async {
+  await dotenv.load(fileName: "../.env");
   runApp(const MyApp());
 }
 
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
         textTheme: Typography().white.apply(fontFamily: 'DinNextRounded'),
         scaffoldBackgroundColor: const Color(0xFF131F24),
       ),
-      home: const WelcomeScreen(),
+      home: const LoginScreen(),
     );
   }
 }

@@ -28,7 +28,7 @@ class RegisterScreen extends StatelessWidget {
           children: [
             const SizedBox(height: 20),
             Text(
-              'TWORD',
+              'PAAIEDS',
               textAlign: TextAlign.center,
               style: GoogleFonts.pacifico(
                 color: Colors.white,
@@ -75,16 +75,6 @@ class RegisterScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 40),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                SocialButton(icon: FontAwesomeIcons.instagram, onPressed: () {}),
-                SocialButton(icon: FontAwesomeIcons.facebookF, onPressed: () {}),
-                SocialButton(icon: FontAwesomeIcons.apple, onPressed: () {}),
-                SocialButton(icon: FontAwesomeIcons.twitter, onPressed: () {}),
-              ],
-            )
           ],
         ),
       ),

@@ -1,11 +1,35 @@
 import 'dart:convert';
-
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:paaieds/api/gemini_service.dart';
 import 'package:paaieds/ui/screens/main_app/test_screen.dart';
-import 'package:paaieds/ui/widgets/gradient_text.dart';
-import 'gemini_service.dart';
+
+// Componente GradientText
+class GradientText extends StatelessWidget {
+  const GradientText(
+    this.text, {
+    super.key,
+    required this.gradient,
+    this.style,
+  });
+
+  final String text;
+  final TextStyle? style;
+  final Gradient gradient;
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      blendMode: BlendMode.srcIn,
+      shaderCallback: (bounds) => gradient.createShader(
+        Rect.fromLTWH(0, 0, bounds.width, bounds.height),
+      ),
+      child: Text(text, style: style),
+    );
+  }
+}
+
 class LearnTestScreen extends StatefulWidget {
   const LearnTestScreen({super.key});
 
@@ -25,7 +49,7 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
 
     setState(() {
       _loading = true;
-      _parsedJson = null;
+      _parsedJson = null; // ✅ Limpiar la card anterior
     });
 
     final prompt =

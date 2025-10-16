@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CustomTextField extends StatelessWidget {
   final String hintText;
@@ -16,16 +17,24 @@ class CustomTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextField(
       obscureText: isPassword,
-      style: const TextStyle(color: Colors.white),
+      style: GoogleFonts.montserrat(color: Colors.black87, fontSize: 16),
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: Colors.white70),
+        hintStyle: GoogleFonts.montserrat(color: Colors.grey[500]),
+        prefixIcon: Icon(icon, color: Colors.blueAccent),
         filled: true,
-        fillColor: const Color(0xFF2D3D41),
-        border: OutlineInputBorder(
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16,
+          horizontal: 16,
+        ),
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide.none,
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          borderSide: const BorderSide(color: Colors.blueAccent, width: 1.5),
         ),
       ),
     );
