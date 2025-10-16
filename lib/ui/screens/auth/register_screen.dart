@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:paaieds/ui/screens/auth/login_screen.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
 import 'package:paaieds/ui/widgets/primary_button.dart';
-import 'package:paaieds/ui/widgets/social_button.dart';
 
 class RegisterScreen extends StatelessWidget {
   const RegisterScreen({super.key});
@@ -51,7 +49,6 @@ class RegisterScreen extends StatelessWidget {
             const CustomTextField(hintText: 'Confirmar Contraseña', icon: Icons.lock_outline, isPassword: true),
             const SizedBox(height: 30),
             PrimaryButton(text: 'Registrarse', onPressed: () {
-              // TODO: Lógica de registro
             }),
             const SizedBox(height: 20),
             Row(
