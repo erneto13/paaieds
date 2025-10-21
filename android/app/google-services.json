@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:970074206707:android:cc3067e11e944aea9ea286",
+        "android_client_info": {
+          "package_name": "com.erneto.paaieds"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAqea0qGy49Ie2yhqG2Leq8Htv_P9l8F00"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:970074206707:android:fb97ccd411f308109ea286",
         "android_client_info": {
           "package_name": "com.example.paaieds"
