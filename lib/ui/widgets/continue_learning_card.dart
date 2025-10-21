@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:paaieds/core/models/course.dart'; // Si usas el modelo
 
 class ContinueLearningCard extends StatelessWidget {
-
   const ContinueLearningCard({super.key});
 
   @override
