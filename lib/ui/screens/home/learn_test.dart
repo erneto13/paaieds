@@ -30,7 +30,8 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
 
     setState(() {
       _loading = true;
-      _parsedJson = null;
+      _parsedJson =
+          null; // Oculta la tarjeta anterior mientras se genera una nueva
     });
 
     final prompt = _buildPrompt(topic);
@@ -86,22 +87,29 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   Widget build(BuildContext context) {
     final isDisabled = _loading;
 
-    return FadeInUp(
-      child: Scaffold(
-        appBar: CustomAppBar(title: "test", onProfileTap: () => {}),
-        backgroundColor: Colors.white10,
-        body: Stack(
-          children: [
-            SafeArea(
-              child: Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildAIPoweredLabel(),
-                      const SizedBox(height: 20),
-                      GradientText(
+    // Ya no envolvemos el Scaffold en FadeInUp
+    return Scaffold(
+      appBar: CustomAppBar(title: "test", onProfileTap: () => {}),
+      backgroundColor: Colors.white10,
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // --- ANIMACIÓN AÑADIDA ---
+                    FadeInDown(
+                      duration: const Duration(milliseconds: 300),
+                      child: _buildAIPoweredLabel(),
+                    ),
+                    const SizedBox(height: 20),
+                    // --- ANIMACIÓN AÑADIDA ---
+                    FadeInDown(
+                      duration: const Duration(milliseconds: 400),
+                      child: GradientText(
                         "¿Qué quieres aprender?",
                         gradient: const LinearGradient(
                           colors: [AppColors.deepBlue, AppColors.oceanBlue],
@@ -111,28 +119,38 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const SizedBox(height: 30),
-                      _buildTextField(isDisabled),
-                      const SizedBox(height: 20),
-                      _buildGenerateButton(isDisabled),
-                      const SizedBox(height: 30),
-                      _buildTestPreview(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 30),
+                    // --- ANIMACIÓN AÑADIDA ---
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 500),
+                      child: _buildTextField(isDisabled),
+                    ),
+                    const SizedBox(height: 20),
+                    // --- ANIMACIÓN AÑADIDA ---
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 600),
+                      child: _buildGenerateButton(isDisabled),
+                    ),
+                    const SizedBox(height: 30),
+                    // Este método ahora contiene la animación de animate_do
+                    _buildTestPreview(),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
-        bottomNavigationBar: CustomBottomNavBar(
-          currentIndex: _selectedIndex,
-          onTap: _onNavBarTap,
-        ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: _selectedIndex,
+        onTap: _onNavBarTap,
       ),
     );
   }
 
   Widget _buildTextField(bool isDisabled) {
+    // ... (sin cambios en este método)
     return TextField(
       controller: _controller,
       enabled: !isDisabled,
@@ -149,7 +167,9 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
-          borderSide: BorderSide(color: AppColors.lightBlue.withValues(alpha: 0.3)),
+          borderSide: BorderSide(
+            color: AppColors.lightBlue.withValues(alpha: 0.3),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12.0),
@@ -169,6 +189,7 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   }
 
   Widget _buildGenerateButton(bool isDisabled) {
+    // ... (sin cambios en este método)
     return SizedBox(
       width: double.infinity,
       height: 50,
@@ -217,35 +238,27 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
     );
   }
 
+  // --- MÉTODO ACTUALIZADO ---
   Widget _buildTestPreview() {
-    return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 300),
-      transitionBuilder: (child, animation) {
-        return FadeTransition(
-          opacity: animation,
-          child: SlideTransition(
-            position: Tween<Offset>(
-              begin: const Offset(0, 0.1),
-              end: Offset.zero,
-            ).animate(animation),
-            child: child,
-          ),
-        );
-      },
-      child: _parsedJson != null
-          ? TestPreviewCard(
-              key: ValueKey(_parsedJson!["topic"]),
-              parsedJson: _parsedJson!,
-              onStartTest: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => TestScreen(data: _parsedJson!),
-                  ),
-                );
-              },
-            )
-          : const SizedBox.shrink(),
+    // Si no hay JSON, no mostramos nada.
+    if (_parsedJson == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Usamos SlideInUp de animate_do para que la tarjeta aparezca desde abajo.
+    // Usamos la Key para que Flutter sepa que es un widget nuevo si el topic cambia.
+    return SlideInUp(
+      key: ValueKey(_parsedJson!["topic"]),
+      duration: const Duration(milliseconds: 400),
+      child: TestPreviewCard(
+        parsedJson: _parsedJson!,
+        onStartTest: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => TestScreen(data: _parsedJson!)),
+          );
+        },
+      ),
     );
   }
 
@@ -256,6 +269,7 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   }
 
   Widget _buildAIPoweredLabel() {
+    // ... (sin cambios en este método)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(

@@ -60,7 +60,7 @@ class _TestScreenState extends State<TestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: CustomAppBar(
-        title: "Test: ${widget.data["topic"]}",
+        title: "${widget.data["topic"]}",
         onProfileTap: () {},
       ),
       backgroundColor: Colors.white10,
