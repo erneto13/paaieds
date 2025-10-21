@@ -1,53 +1,120 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:paaieds/config/app_colors.dart';
+import 'package:paaieds/core/models/question.dart';
+import 'package:paaieds/ui/widgets/custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/question_card.dart';
 
-class TestScreen extends StatelessWidget {
+class TestScreen extends StatefulWidget {
   final Map<String, dynamic> data;
 
   const TestScreen({super.key, required this.data});
 
   @override
-  Widget build(BuildContext context) {
-    final questions = List<Map<String, dynamic>>.from(data["questions"]);
+  State<TestScreen> createState() => _TestScreenState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("Test: ${data["topic"]}", style: GoogleFonts.montserrat()),
-        backgroundColor: Colors.blueAccent,
+class _TestScreenState extends State<TestScreen> {
+  late List<QuestionModel> questions;
+  Map<int, String> selectedAnswers = {};
+
+  @override
+  void initState() {
+    super.initState();
+    questions = (widget.data["questions"] as List)
+        .map((q) => QuestionModel.fromJson(q))
+        .toList();
+  }
+
+  bool get allAnswered => selectedAnswers.length == questions.length;
+
+  void _handleAnswer(int index, String answer) {
+    setState(() {
+      selectedAnswers[index] = answer;
+    });
+  }
+
+  void _sendAnswers() {
+    final result = {
+      "topic": widget.data["topic"],
+      "answers": questions.asMap().entries.map((entry) {
+        final i = entry.key;
+        final q = entry.value;
+        return {"question": q.question, "selected": selectedAnswers[i]};
+      }).toList(),
+    };
+
+    final jsonString = const JsonEncoder.withIndent('  ').convert(result);
+    debugPrint(jsonString); // lo imprime en consola por ahora
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Respuestas enviadas (ver consola JSON)"),
+        backgroundColor: AppColors.deepBlue,
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: questions.length,
-        itemBuilder: (context, index) {
-          final q = questions[index];
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "${index + 1}. ${q["question"]}",
-                    style: GoogleFonts.montserrat(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  ...List<String>.from(q["options"]).map(
-                    (opt) => ListTile(
-                      title: Text(opt, style: GoogleFonts.montserrat()),
-                      leading: const Icon(
-                        Icons.circle_outlined,
-                        color: Colors.blueAccent,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: CustomAppBar(
+        title: "Test: ${widget.data["topic"]}",
+        onProfileTap: () {},
+      ),
+      backgroundColor: Colors.white10,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: questions.length,
+                  itemBuilder: (context, index) {
+                    final q = questions[index];
+                    return QuestionCard(
+                      question: q,
+                      index: index,
+                      onAnswerSelected: (answer) =>
+                          _handleAnswer(index, answer),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 300),
+                opacity: allAnswered ? 1.0 : 0.4,
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: allAnswered ? _sendAnswers : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      disabledBackgroundColor: AppColors.lightBlue.withValues(
+                        alpha: 0.5,
                       ),
-                      dense: true,
-                      visualDensity: VisualDensity.compact,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: Text(
+                      "Enviar respuestas",
+                      style: GoogleFonts.montserrat(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-          );
-        },
+            ],
+          ),
+        ),
       ),
     );
   }
