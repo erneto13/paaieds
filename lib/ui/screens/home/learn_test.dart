@@ -1,6 +1,7 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:paaieds/config/app_colors.dart';
+import 'package:paaieds/core/models/user.dart';
 import 'package:paaieds/ui/screens/main_app/test_screen.dart';
 import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
 import 'package:paaieds/ui/widgets/gradient_text.dart';
@@ -10,7 +11,9 @@ import '../../widgets/custom_app_bar.dart';
 import '../../widgets/test_preview_card.dart';
 
 class LearnTestScreen extends StatefulWidget {
-  const LearnTestScreen({super.key});
+  final UserModel user;
+
+  const LearnTestScreen({super.key, required this.user});
 
   @override
   State<LearnTestScreen> createState() => _LearnTestScreenState();
@@ -85,9 +88,8 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   Widget build(BuildContext context) {
     final isDisabled = _loading;
 
-    // Ya no envolvemos el Scaffold en FadeInUp
     return Scaffold(
-      appBar: CustomAppBar(title: "test", onProfileTap: () => {}),
+      appBar: CustomAppBar(title: "Hola, ${widget.user.firstName}", onProfileTap: () => {}),
       backgroundColor: Colors.white10,
       body: Stack(
         children: [
@@ -98,13 +100,11 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // --- ANIMACIÓN AÑADIDA ---
                     FadeInDown(
                       duration: const Duration(milliseconds: 300),
                       child: _buildAIPoweredLabel(),
                     ),
                     const SizedBox(height: 20),
-                    // --- ANIMACIÓN AÑADIDA ---
                     FadeInDown(
                       duration: const Duration(milliseconds: 400),
                       child: GradientText(
@@ -120,19 +120,16 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                       ),
                     ),
                     const SizedBox(height: 30),
-                    // --- ANIMACIÓN AÑADIDA ---
                     FadeInUp(
                       duration: const Duration(milliseconds: 500),
                       child: _buildTextField(isDisabled),
                     ),
                     const SizedBox(height: 20),
-                    // --- ANIMACIÓN AÑADIDA ---
                     FadeInUp(
                       duration: const Duration(milliseconds: 600),
                       child: _buildGenerateButton(isDisabled),
                     ),
                     const SizedBox(height: 30),
-                    // Este método ahora contiene la animación de animate_do
                     _buildTestPreview(),
                   ],
                 ),
@@ -149,7 +146,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   }
 
   Widget _buildTextField(bool isDisabled) {
-    // ... (sin cambios en este método)
     return TextField(
       controller: _controller,
       enabled: !isDisabled,
@@ -188,7 +184,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   }
 
   Widget _buildGenerateButton(bool isDisabled) {
-    // ... (sin cambios en este método)
     return SizedBox(
       width: double.infinity,
       height: 50,
@@ -239,9 +234,7 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
     );
   }
 
-  // --- MÉTODO ACTUALIZADO ---
   Widget _buildTestPreview() {
-    // Si no hay JSON, no mostramos nada.
     if (_parsedJson == null) {
       return const SizedBox.shrink();
     }
@@ -268,7 +261,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   }
 
   Widget _buildAIPoweredLabel() {
-    // ... (sin cambios en este método)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(

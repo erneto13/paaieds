@@ -36,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await _authService.signInWithEmail(
+    final userModel = await _authService.signInWithEmail(
       email: email,
       password: password,
     );
@@ -45,13 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = false);
 
-    if (result['success']) {
+    if (userModel != null) {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LearnTestScreen()),
+        MaterialPageRoute(builder: (_) => LearnTestScreen(user: userModel)),
       );
     } else {
-      _showSnackBar(result['message'], isError: true);
+      _showSnackBar('Credenciales incorrectas', isError: true);
     }
   }
 

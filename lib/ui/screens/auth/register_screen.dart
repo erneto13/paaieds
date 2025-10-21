@@ -71,7 +71,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await _authService.registerWithEmail(
+    final userModel = await _authService.registerWithEmail(
       email: email,
       password: password,
       firstName: firstName,
@@ -82,19 +82,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = false);
 
-    if (result['success']) {
+    if (userModel != null) {
       _showSnackBar('¡Cuenta creada exitosamente!');
-
       await Future.delayed(const Duration(seconds: 1));
 
       if (!mounted) return;
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const LearnTestScreen()),
+        MaterialPageRoute(builder: (_) => LoginScreen()),
       );
-    } else {
-      _showSnackBar(result['message'], isError: true);
     }
   }
 

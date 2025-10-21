@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:paaieds/core/models/user.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -10,64 +11,67 @@ class AuthService {
 
   User? get currentUser => _auth.currentUser;
 
-  Future<Map<String, dynamic>> registerWithEmail({
+  Future<UserModel?> registerWithEmail({
     required String email,
     required String password,
     required String firstName,
     required String lastName,
   }) async {
     try {
-      final UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
       final user = userCredential.user;
-      if (user == null) {
-        throw Exception('Error al crear el usuario');
-      }
+      if (user == null) throw Exception('Error al crear el usuario');
 
       await user.updateDisplayName('$firstName $lastName');
 
-      await _firestore.collection('users').doc(user.uid).set({
-        'uid': user.uid,
-        'email': email,
-        'firstName': firstName,
-        'lastName': lastName,
-        'displayName': '$firstName $lastName',
-        'createdAt': FieldValue.serverTimestamp(),
-        'authProvider': 'email',
-        'assessments': [],
-        'roadmaps': [],
-      });
+      final userModel = UserModel(
+        uid: user.uid,
+        email: email,
+        firstName: firstName,
+        lastName: lastName,
+        displayName: '$firstName $lastName',
+        createdAt: Timestamp.now(),
+        authProvider: 'email',
+      );
 
-      return {
-        'success': true,
-        'message': 'Usuario registrado exitosamente',
-        'user': user,
-      };
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .set(userModel.toFirestore());
+
+      return userModel;
     } on FirebaseAuthException catch (e) {
-      return {'success': false, 'message': _getAuthErrorMessage(e.code)};
+      print('Error de Firebase: ${e.code}');
+      rethrow;
     } catch (e) {
-      return {'success': false, 'message': 'Error inesperado: ${e.toString()}'};
+      print('Error inesperado: $e');
+      rethrow;
     }
   }
 
-  Future<Map<String, dynamic>> signInWithEmail({
+  Future<UserModel?> signInWithEmail({
     required String email,
     required String password,
   }) async {
     try {
-      final UserCredential userCredential = await _auth
-          .signInWithEmailAndPassword(email: email, password: password);
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-      return {
-        'success': true,
-        'message': 'Inicio de sesión exitoso',
-        'user': userCredential.user,
-      };
+      final user = userCredential.user;
+      if (user == null) return null;
+
+      final doc = await _firestore.collection('users').doc(user.uid).get();
+
+      return UserModel.fromFirestore(doc);
     } on FirebaseAuthException catch (e) {
-      return {'success': false, 'message': _getAuthErrorMessage(e.code)};
-    } catch (e) {
-      return {'success': false, 'message': 'Error inesperado: ${e.toString()}'};
+      print('Error al iniciar sesión: ${e.code}');
+      rethrow;
     }
   }
 
