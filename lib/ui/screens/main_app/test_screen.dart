@@ -46,7 +46,7 @@ class _TestScreenState extends State<TestScreen> {
     };
 
     final jsonString = const JsonEncoder.withIndent('  ').convert(result);
-    debugPrint(jsonString); // lo imprime en consola por ahora
+    debugPrint(jsonString);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
