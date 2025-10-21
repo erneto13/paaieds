@@ -31,8 +31,8 @@ class CustomBottomNavBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home,
+                icon: Icons.add_circle_outline,
+                activeIcon: Icons.add_circle,
                 label: "Inicio",
                 index: 0,
               ),
