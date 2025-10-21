@@ -1,11 +1,117 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'package:paaieds/core/services/auth_service.dart';
 import 'package:paaieds/ui/screens/auth/login_screen.dart';
+import 'package:paaieds/ui/screens/home/learn_test.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
 import 'package:paaieds/ui/widgets/primary_button.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
+  final AuthService _authService = AuthService();
+  bool _isLoading = false;
+
+  bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _handleRegister() async {
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final confirmPassword = _confirmPasswordController.text.trim();
+
+    if (firstName.isEmpty ||
+        lastName.isEmpty ||
+        email.isEmpty ||
+        password.isEmpty ||
+        confirmPassword.isEmpty) {
+      _showSnackBar('Por favor completa todos los campos', isError: true);
+      return;
+    }
+
+    if (!_isValidEmail(email)) {
+      _showSnackBar('Por favor ingresa un correo válido', isError: true);
+      return;
+    }
+
+    if (password.length < 6) {
+      _showSnackBar(
+        'La contraseña debe tener al menos 6 caracteres',
+        isError: true,
+      );
+      return;
+    }
+
+    if (password != confirmPassword) {
+      _showSnackBar('Las contraseñas no coinciden', isError: true);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final result = await _authService.registerWithEmail(
+      email: email,
+      password: password,
+      firstName: firstName,
+      lastName: lastName,
+    );
+
+    if (!mounted) return;
+
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      _showSnackBar('¡Cuenta creada exitosamente!');
+
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LearnTestScreen()),
+      );
+    } else {
+      _showSnackBar(result['message'], isError: true);
+    }
+  }
+
+  bool _isValidEmail(String email) {
+    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +126,8 @@ class RegisterScreen extends StatelessWidget {
               children: [
                 Text(
                   'PAAIEDS',
-                  style: GoogleFonts.montserrat(
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     color: Colors.blueAccent,
                     fontSize: 38,
                     fontWeight: FontWeight.bold,
@@ -29,82 +136,116 @@ class RegisterScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Crea tu cuenta para continuar',
-                  style: GoogleFonts.montserrat(
+                  style: TextStyle(
+                    fontFamily: 'Montserrat',
                     color: Colors.grey[700],
                     fontSize: 16,
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
-                const Row(
+                Row(
                   children: [
                     Expanded(
                       child: CustomTextField(
+                        controller: _firstNameController,
                         hintText: 'Nombre',
                         icon: Icons.person_outline,
+                        enabled: !_isLoading,
                       ),
                     ),
-                    SizedBox(width: 16),
+                    const SizedBox(width: 16),
                     Expanded(
                       child: CustomTextField(
+                        controller: _lastNameController,
                         hintText: 'Apellido',
                         icon: Icons.person_outline,
+                        enabled: !_isLoading,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                const CustomTextField(
+                CustomTextField(
+                  controller: _emailController,
                   hintText: 'Correo electrónico',
                   icon: Icons.email_outlined,
+                  keyboardType: TextInputType.emailAddress,
+                  enabled: !_isLoading,
                 ),
                 const SizedBox(height: 20),
-
-                const CustomTextField(
+                CustomTextField(
+                  controller: _passwordController,
                   hintText: 'Contraseña',
                   icon: Icons.lock_outline,
-                  isPassword: true,
+                  isPassword: !_isPasswordVisible,
+                  enabled: !_isLoading,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isPasswordVisible = !_isPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
                 const SizedBox(height: 20),
-
-                const CustomTextField(
+                CustomTextField(
+                  controller: _confirmPasswordController,
                   hintText: 'Confirmar contraseña',
                   icon: Icons.lock_outline,
-                  isPassword: true,
+                  isPassword: !_isConfirmPasswordVisible,
+                  enabled: !_isLoading,
+                  onSubmitted: (_) => _handleRegister(),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _isConfirmPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _isConfirmPasswordVisible = !_isConfirmPasswordVisible;
+                      });
+                    },
+                  ),
                 ),
-
                 const SizedBox(height: 30),
-
-                PrimaryButton(
-                  text: 'Registrarse',
-                  onPressed: () {
-                    // Aquí va tu lógica de registro
-                  },
-                ),
-
+                _isLoading
+                    ? const CircularProgressIndicator()
+                    : PrimaryButton(
+                        text: 'Registrarse',
+                        onPressed: _handleRegister,
+                      ),
                 const SizedBox(height: 25),
-
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
                       '¿Ya tienes cuenta? ',
-                      style: GoogleFonts.montserrat(color: Colors.grey[700]),
+                      style: TextStyle(
+                        fontFamily: 'Montserrat',
+                        color: Colors.grey[700],
+                      ),
                     ),
                     GestureDetector(
                       onTap: () {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (c) => const LoginScreen(),
+                            builder: (_) => const LoginScreen(),
                           ),
                         );
                       },
                       child: Text(
                         'Inicia sesión',
-                        style: GoogleFonts.montserrat(
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
                           color: Colors.blueAccent,
                           fontWeight: FontWeight.bold,
                         ),

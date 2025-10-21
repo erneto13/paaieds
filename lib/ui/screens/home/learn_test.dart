@@ -1,6 +1,5 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/ui/screens/main_app/test_screen.dart';
 import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
@@ -30,8 +29,7 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
 
     setState(() {
       _loading = true;
-      _parsedJson =
-          null; // Oculta la tarjeta anterior mientras se genera una nueva
+      _parsedJson = null;
     });
 
     final prompt = _buildPrompt(topic);
@@ -114,7 +112,8 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                         gradient: const LinearGradient(
                           colors: [AppColors.deepBlue, AppColors.oceanBlue],
                         ),
-                        style: GoogleFonts.montserrat(
+                        style: TextStyle(
+                          fontFamily: 'Montserrat',
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
@@ -218,7 +217,8 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                   const SizedBox(width: 12),
                   Text(
                     "Generando test...",
-                    style: GoogleFonts.montserrat(
+                    style: TextStyle(
+                      fontFamily: 'Montserrat',
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -228,7 +228,8 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
               )
             : Text(
                 "Generar Test",
-                style: GoogleFonts.montserrat(
+                style: TextStyle(
+                  fontFamily: 'Montserrat',
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -290,7 +291,8 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
           const SizedBox(width: 6),
           Text(
             "Potenciado con IA",
-            style: GoogleFonts.montserrat(
+            style: TextStyle(
+              fontFamily: 'Montserrat',
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.deepBlue,
