@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
@@ -30,10 +29,7 @@ class PrimaryButton extends StatelessWidget {
               ),
               child: Text(
                 text,
-                style: GoogleFonts.montserrat(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               ),
             )
           : ElevatedButton(
@@ -49,7 +45,7 @@ class PrimaryButton extends StatelessWidget {
               onPressed: onPressed,
               child: Text(
                 text,
-                style: GoogleFonts.montserrat(
+                style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,

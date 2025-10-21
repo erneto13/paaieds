@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/question.dart';
 
 class QuestionCard extends StatefulWidget {
   final QuestionModel question;
   final int index;
-  final ValueChanged<String> onAnswerSelected; 
+  final ValueChanged<String> onAnswerSelected;
 
   const QuestionCard({
     super.key,
@@ -41,7 +40,7 @@ class _QuestionCardState extends State<QuestionCard> {
           children: [
             Text(
               "${widget.index + 1}. ${q.question}",
-              style: GoogleFonts.montserrat(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 color: AppColors.deepBlue,
                 fontSize: 16,
@@ -86,7 +85,7 @@ class _QuestionCardState extends State<QuestionCard> {
           ),
           title: Text(
             text,
-            style: GoogleFonts.montserrat(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: isSelected ? AppColors.deepBlue : Colors.black87,

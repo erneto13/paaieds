@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:paaieds/config/app_colors.dart';
 
 class TestPreviewCard extends StatelessWidget {
@@ -58,7 +57,7 @@ class TestPreviewCard extends StatelessWidget {
         Expanded(
           child: Text(
             topic,
-            style: GoogleFonts.montserrat(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -80,7 +79,7 @@ class TestPreviewCard extends StatelessWidget {
           Expanded(
             child: Text(
               question['question'],
-              style: GoogleFonts.montserrat(color: Colors.white, fontSize: 15),
+              style: TextStyle(color: Colors.white, fontSize: 15),
             ),
           ),
         ],
@@ -93,7 +92,7 @@ class TestPreviewCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Text(
         "...y ${totalQuestions - 3} preguntas más",
-        style: GoogleFonts.montserrat(color: Colors.white70, fontSize: 14),
+        style: TextStyle(color: Colors.white70, fontSize: 14),
       ),
     );
   }
@@ -107,7 +106,7 @@ class TestPreviewCard extends StatelessWidget {
         icon: const Icon(Icons.play_arrow, color: AppColors.oceanBlue),
         label: Text(
           "Comenzar Test",
-          style: GoogleFonts.montserrat(
+          style: TextStyle(
             color: AppColors.lightBlue,
             fontWeight: FontWeight.bold,
             fontSize: 16,

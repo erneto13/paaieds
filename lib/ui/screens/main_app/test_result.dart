@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 
 class TestResultsScreen extends StatelessWidget {
@@ -49,7 +48,7 @@ class TestResultsScreen extends StatelessWidget {
                         duration: const Duration(milliseconds: 500),
                         child: Text(
                           '¡Diagnóstico Completado!',
-                          style: GoogleFonts.montserrat(
+                          style: TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.blueAccent,
@@ -62,7 +61,7 @@ class TestResultsScreen extends StatelessWidget {
                         duration: const Duration(milliseconds: 600),
                         child: Text(
                           topic,
-                          style: GoogleFonts.montserrat(
+                          style: TextStyle(
                             fontSize: 18,
                             color: Colors.grey[700],
                           ),
@@ -158,7 +157,7 @@ class TestResultsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Nivel: $level',
-            style: GoogleFonts.montserrat(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -167,7 +166,7 @@ class TestResultsScreen extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${percentage.toStringAsFixed(1)}% de dominio',
-            style: GoogleFonts.montserrat(
+            style: TextStyle(
               fontSize: 16,
               color: Colors.white.withValues(alpha: 0.9),
             ),
@@ -219,16 +218,13 @@ class TestResultsScreen extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value,
-          style: GoogleFonts.montserrat(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
           ),
         ),
-        Text(
-          label,
-          style: GoogleFonts.montserrat(fontSize: 14, color: Colors.grey[600]),
-        ),
+        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
       ],
     );
   }
@@ -273,7 +269,7 @@ class TestResultsScreen extends StatelessWidget {
           Expanded(
             child: Text(
               recommendation,
-              style: GoogleFonts.montserrat(
+              style: TextStyle(
                 fontSize: 14,
                 color: Colors.grey[800],
                 height: 1.4,
@@ -302,7 +298,7 @@ class TestResultsScreen extends StatelessWidget {
         icon: const Icon(Icons.map, color: Colors.white),
         label: Text(
           'Generar Mi Roadmap',
-          style: GoogleFonts.montserrat(
+          style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 16,

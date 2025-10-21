@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -37,7 +36,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 child: Center(
                   child: Text(
                     title,
-                    style: GoogleFonts.montserrat(
+                    style: TextStyle(
                       color: Colors.grey[800],
                       fontWeight: FontWeight.w600,
                       fontSize: 18,

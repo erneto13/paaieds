@@ -22,7 +22,7 @@ class MyApp extends StatelessWidget {
       title: 'TWORD',
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark(useMaterial3: true).copyWith(
-        textTheme: Typography().white.apply(fontFamily: 'DinNextRounded'),
+        textTheme: Typography().white.apply(fontFamily: 'Montserrat'),
         scaffoldBackgroundColor: const Color(0xFF131F24),
       ),
       home: const LoginScreen(),

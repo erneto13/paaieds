@@ -113,7 +113,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                           colors: [AppColors.deepBlue, AppColors.oceanBlue],
                         ),
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
                         ),
@@ -213,7 +212,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                   Text(
                     "Generando test...",
                     style: TextStyle(
-                      fontFamily: 'Montserrat',
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -224,7 +222,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
             : Text(
                 "Generar Test",
                 style: TextStyle(
-                  fontFamily: 'Montserrat',
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -284,7 +281,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
           Text(
             "Potenciado con IA",
             style: TextStyle(
-              fontFamily: 'Montserrat',
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: AppColors.deepBlue,

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/algorithm/irt_service.dart';
 import 'package:paaieds/core/models/question.dart';
@@ -43,7 +42,6 @@ class _TestScreenState extends State<TestScreen> {
     setState(() => _isEvaluating = true);
 
     try {
-      // Preparar las respuestas con información de corrección
       final responses = questions.asMap().entries.map((entry) {
         final i = entry.key;
         final q = entry.value;
@@ -59,7 +57,6 @@ class _TestScreenState extends State<TestScreen> {
         responses: responses,
       );
 
-      // // Guardar en Firebase (usa el ID del usuario actual)
       // final userId = 'user_123'; // Obtenlo de Firebase Auth
 
       // await UserProfileService().saveAssessmentResult(
@@ -104,7 +101,6 @@ class _TestScreenState extends State<TestScreen> {
     String topic,
     Map<String, dynamic> evaluationResults,
   ) async {
-    // Aquí llamarás a Gemini para generar el roadmap personalizado
     debugPrint(
       "Generando roadmap para $topic con nivel ${evaluationResults['level']}",
     );
@@ -169,7 +165,7 @@ class _TestScreenState extends State<TestScreen> {
                               const SizedBox(width: 12),
                               Text(
                                 "Evaluando...",
-                                style: GoogleFonts.montserrat(
+                                style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16,
@@ -179,7 +175,7 @@ class _TestScreenState extends State<TestScreen> {
                           )
                         : Text(
                             "Enviar respuestas",
-                            style: GoogleFonts.montserrat(
+                            style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paaieds/core/services/auth_service.dart';
 import 'package:paaieds/ui/screens/auth/login_screen.dart';
-import 'package:paaieds/ui/screens/home/learn_test.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
 import 'package:paaieds/ui/widgets/primary_button.dart';
 
@@ -123,7 +122,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Text(
                   'PAAIEDS',
                   style: TextStyle(
-                    fontFamily: 'Montserrat',
                     color: Colors.blueAccent,
                     fontSize: 38,
                     fontWeight: FontWeight.bold,
@@ -132,11 +130,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Crea tu cuenta para continuar',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: Colors.grey[700],
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.grey[700], fontSize: 16),
                 ),
                 const SizedBox(height: 40),
                 Row(
@@ -224,10 +218,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   children: [
                     Text(
                       '¿Ya tienes cuenta? ',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: Colors.grey[700],
-                      ),
+                      style: TextStyle(color: Colors.grey[700]),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -241,7 +232,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       child: Text(
                         'Inicia sesión',
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
                           color: Colors.blueAccent,
                           fontWeight: FontWeight.bold,
                         ),

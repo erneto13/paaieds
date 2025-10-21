@@ -80,7 +80,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 Text(
                   'PAAIEDS',
                   style: TextStyle(
-                    fontFamily: 'Montserrat',
                     color: Colors.blueAccent,
                     fontSize: 38,
                     fontWeight: FontWeight.bold,
@@ -89,11 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 12),
                 Text(
                   'Inicia sesión para continuar',
-                  style: TextStyle(
-                    fontFamily: 'Montserrat',
-                    color: Colors.grey[700],
-                    fontSize: 16,
-                  ),
+                  style: TextStyle(color: Colors.grey[700], fontSize: 16),
                 ),
                 const SizedBox(height: 40),
                 CustomTextField(
@@ -126,10 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   children: [
                     Text(
                       '¿No tienes cuenta? ',
-                      style: TextStyle(
-                        fontFamily: 'Montserrat',
-                        color: Colors.grey[700],
-                      ),
+                      style: TextStyle(color: Colors.grey[700]),
                     ),
                     GestureDetector(
                       onTap: () {
@@ -143,7 +135,6 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         'Regístrate',
                         style: TextStyle(
-                          fontFamily: 'Montserrat',
                           color: Colors.blueAccent,
                           fontWeight: FontWeight.bold,
                         ),
