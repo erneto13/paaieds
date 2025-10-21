@@ -245,8 +245,6 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
       return const SizedBox.shrink();
     }
 
-    // Usamos SlideInUp de animate_do para que la tarjeta aparezca desde abajo.
-    // Usamos la Key para que Flutter sepa que es un widget nuevo si el topic cambia.
     return SlideInUp(
       key: ValueKey(_parsedJson!["topic"]),
       duration: const Duration(milliseconds: 400),

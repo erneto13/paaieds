@@ -1,12 +1,12 @@
 import 'dart:math';
 
 class IRTService {
-  /// Calcula la habilidad estimada (theta) basada en respuestas
+  /// calcula la habilidad estimada (theta) basada en respuestas
   ///
-  /// Implementación simplificada del modelo logístico de 2 parámetros
+  /// implementación simplificada del modelo logístico de 2 parámetros
   /// θ (theta) representa el nivel de habilidad del usuario
   ///
-  /// Retorna un objeto con:
+  /// retorna un objeto con:
   /// - theta: nivel de habilidad estimado (-3 a +3)
   /// - level: clasificación ("Básico", "Intermedio", "Avanzado")
   /// - percentage: porcentaje de dominio (0-100)
@@ -16,7 +16,7 @@ class IRTService {
   }) {
     double theta = 0.0; //inicializacion de theta
 
-    // Parámetros de las preguntas (en producción vendrían calibrados)
+    //parámetros de las preguntas (en producción vendrían calibrados)
     final questionParams = _generateQuestionParameters(responses.length);
 
     //iteración para estimar theta usando Maximum Likelihood
