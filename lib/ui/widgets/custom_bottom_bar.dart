@@ -91,7 +91,7 @@ class CustomBottomNavBar extends StatelessWidget {
               curve: Curves.easeOutBack,
               child: Icon(
                 isActive ? activeIcon : icon,
-                color: isActive ? AppColors.primary : AppColors.textLight,
+                color: isActive ? AppColors.backgroundButtom : AppColors.textLight,
                 size: 28,
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:motion_snackbar/motion_snackbar.dart';
 import 'package:paaieds/core/services/auth_service.dart';
 import 'package:paaieds/ui/screens/auth/login_screen.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
@@ -67,25 +68,38 @@ class _RegisterScreenState extends State<RegisterScreen>
         email.isEmpty ||
         password.isEmpty ||
         confirmPassword.isEmpty) {
-      _showSnackBar('Por favor completa todos los campos', isError: true);
+      SnackbarUtils.showInfoSnackbar(
+        context: context,
+        message: 'Completa todos los campos',
+        description: 'Todos los campos deben ser lleanos, intenta de nuevo.',
+      );
       return;
     }
 
     if (!_isValidEmail(email)) {
-      _showSnackBar('Por favor ingresa un correo válido', isError: true);
+      SnackbarUtils.showInfoSnackbar(
+        context: context,
+        message: 'Correo inválido',
+        description: 'Por favor, ingresa un correo válido.',
+      );
       return;
     }
 
     if (password.length < 6) {
-      _showSnackBar(
-        'La contraseña debe tener al menos 6 caracteres',
-        isError: true,
+      SnackbarUtils.showInfoSnackbar(
+        context: context,
+        message: 'Contraseñas con pocos caracteres',
+        description: 'La contraseña debe tener al menos 6 caracteres.',
       );
       return;
     }
 
     if (password != confirmPassword) {
-      _showSnackBar('Las contraseñas no coinciden', isError: true);
+      SnackbarUtils.showInfoSnackbar(
+        context: context,
+        message: 'Contraseñas no coincidentes',
+        description: 'Las contraseñas no coinciden, intenta de nuevo.',
+      );
       return;
     }
 
@@ -103,7 +117,11 @@ class _RegisterScreenState extends State<RegisterScreen>
     setState(() => _isLoading = false);
 
     if (userModel != null) {
-      _showSnackBar('¡Cuenta creada exitosamente!');
+      SnackbarUtils.showSuccessSnackbar(
+        context: context,
+        message: 'Cuenta creada',
+        description: 'Inicia sesión para usar tu cuenta.',
+      );
       await Future.delayed(const Duration(seconds: 1));
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -115,17 +133,6 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   bool _isValidEmail(String email) {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
-
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   @override

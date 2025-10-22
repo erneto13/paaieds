@@ -1,5 +1,6 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
+import 'package:motion_snackbar/motion_snackbar.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/user.dart';
 import 'package:paaieds/ui/screens/main_app/test_screen.dart';
@@ -54,7 +55,15 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
         _parsedJson = {"topic": topic, "questions": jsonData};
       });
     } catch (e) {
-      _showErrorSnackBar(e.toString());
+      if (!mounted) {
+        return;
+      }
+
+      SnackbarUtils.showErrorSnackbar(
+        context: context,
+        message: 'Ha ocurrido un error',
+        description: 'Error al procesar la respuesta, intentar más tarde.',
+      );
     } finally {
       setState(() => _loading = false);
     }
@@ -71,19 +80,6 @@ Cada objeto de pregunta debe tener:
 - "answer": la respuesta correcta
 No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
 ''';
-  }
-
-  void _showErrorSnackBar(String message) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("Error al procesar la respuesta: $message"),
-        backgroundColor: AppColors.oceanBlue,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
   }
 
   @override
@@ -182,7 +178,14 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
         ),
       ),
       onSubmitted: (value) {
-        if (!isDisabled && value.isNotEmpty) {
+        if (isDisabled && value.isEmpty) {
+          SnackbarUtils.showErrorSnackbar(
+            context: context,
+            message: 'Ha ocurrido un error',
+            description:
+                'Debes esperar a que el contenido anterior sea generado.',
+          );
+        } else {
           _generateTest();
         }
       },
@@ -194,9 +197,19 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
       width: double.infinity,
       height: 50,
       child: ElevatedButton(
-        onPressed: isDisabled ? null : _generateTest,
+        onPressed: () {
+          if (_controller.text.trim().isEmpty) {
+            SnackbarUtils.showErrorSnackbar(
+              context: context,
+              message: 'Ha ocurrido un error',
+              description: 'Por favor, ingresa un  tema para generar el test.',
+            );
+            return;
+          }
+          isDisabled ? null : _generateTest();
+        },
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
+          backgroundColor: AppColors.backgroundButtom,
           disabledBackgroundColor: AppColors.lightBlue.withValues(alpha: 0.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
