@@ -1,6 +1,5 @@
 name: paaieds
-description: "Plataforma de Aprendizaje Asistida por IA para la Especialización
-  en Desarrollo de Software "
+description: "Plataforma de Aprendizaje Asistida por IA para la Especialización en Desarrollo de Software "
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -15,9 +14,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   firebase_auth: ^6.1.1
   firebase_core: ^4.2.0
+  firebase_storage: ^13.0.3
   flutter:
     sdk: flutter
   flutter_dotenv: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
   flutter_svg: ^2.2.1
   font_awesome_flutter: ^10.7.0
   google_fonts: ^6.2.1
@@ -34,11 +35,17 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/
-    - assets/images/
+  - assets/
+  - assets/images/
   fonts:
-    - family: Montserrat
-      fonts:
-        - asset: assets/fonts/Montserrat-Regular.ttf
-        - asset: assets/fonts/Montserrat-Bold.ttf
-          weight: 700
+  - family: Montserrat
+    fonts:
+    - asset: assets/fonts/Montserrat-Regular.ttf
+    - asset: assets/fonts/Montserrat-Bold.ttf
+      weight: 700
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/paaieds.png"
+  min_sdk_android: 21
