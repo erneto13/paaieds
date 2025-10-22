@@ -6,6 +6,7 @@ class UserModel {
   final String firstName;
   final String lastName;
   final String displayName;
+  final String? photoURL;
   final Timestamp? createdAt;
   final String authProvider;
   final List<dynamic> assessments;
@@ -17,6 +18,7 @@ class UserModel {
     required this.firstName,
     required this.lastName,
     required this.displayName,
+    this.photoURL,
     this.createdAt,
     required this.authProvider,
     List<dynamic>? assessments,
@@ -33,6 +35,7 @@ class UserModel {
       firstName: data['firstName'] ?? '',
       lastName: data['lastName'] ?? '',
       displayName: data['displayName'] ?? '',
+      photoURL: data['photoURL'],
       createdAt: data['createdAt'] as Timestamp?,
       authProvider: data['authProvider'] ?? 'email',
       assessments: List<dynamic>.from(data['assessments'] ?? []),
@@ -47,6 +50,7 @@ class UserModel {
       'firstName': firstName,
       'lastName': lastName,
       'displayName': displayName,
+      if (photoURL != null) 'photoURL': photoURL,
       'authProvider': authProvider,
       'assessments': assessments,
       'roadmaps': roadmaps,
@@ -59,6 +63,7 @@ class UserModel {
     String? firstName,
     String? lastName,
     String? displayName,
+    String? photoURL,
     Timestamp? createdAt,
     String? authProvider,
     List<dynamic>? assessments,
@@ -70,6 +75,7 @@ class UserModel {
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
       displayName: displayName ?? this.displayName,
+      photoURL: photoURL ?? this.photoURL,
       createdAt: createdAt ?? this.createdAt,
       authProvider: authProvider ?? this.authProvider,
       assessments: assessments ?? this.assessments,
