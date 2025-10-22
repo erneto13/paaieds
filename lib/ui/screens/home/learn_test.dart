@@ -12,8 +12,15 @@ import '../../widgets/test_preview_card.dart';
 
 class LearnTestScreen extends StatefulWidget {
   final UserModel user;
+  final Function(int)? onNavBarTap;
+  final int? currentIndex;
 
-  const LearnTestScreen({super.key, required this.user});
+  const LearnTestScreen({
+    super.key,
+    required this.user,
+    this.onNavBarTap,
+    this.currentIndex,
+  });
 
   @override
   State<LearnTestScreen> createState() => _LearnTestScreenState();
@@ -24,7 +31,6 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
   final GeminiService _geminiService = GeminiService();
   bool _loading = false;
   Map<String, dynamic>? _parsedJson;
-  int _selectedIndex = 0;
 
   Future<void> _generateTest() async {
     final topic = _controller.text.trim();
@@ -80,16 +86,15 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
     );
   }
 
-  void _onNavBarTap(int index) {
-    setState(() => _selectedIndex = index);
-  }
-
   @override
   Widget build(BuildContext context) {
     final isDisabled = _loading;
 
     return Scaffold(
-      appBar: CustomAppBar(title: "Hola, ${widget.user.firstName}", onProfileTap: () => {}),
+      appBar: CustomAppBar(
+        title: "Hola, ${widget.user.firstName}",
+        onProfileTap: () {},
+      ),
       backgroundColor: Colors.white10,
       body: Stack(
         children: [
@@ -137,10 +142,12 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
           ),
         ],
       ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _selectedIndex,
-        onTap: _onNavBarTap,
-      ),
+      bottomNavigationBar: widget.onNavBarTap != null
+          ? CustomBottomNavBar(
+              currentIndex: widget.currentIndex ?? 0,
+              onTap: widget.onNavBarTap!,
+            )
+          : null,
     );
   }
 

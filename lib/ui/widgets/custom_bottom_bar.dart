@@ -43,9 +43,9 @@ class CustomBottomNavBar extends StatelessWidget {
                 index: 1,
               ),
               _buildNavItem(
-                icon: Icons.bar_chart_outlined,
-                activeIcon: Icons.bar_chart,
-                label: "Progreso",
+                icon: Icons.forum_outlined,
+                activeIcon: Icons.forum,
+                label: "Foro",
                 index: 2,
               ),
               _buildNavItem(
