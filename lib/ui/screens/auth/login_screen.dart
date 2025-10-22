@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/services/auth_service.dart';
 import 'package:paaieds/ui/screens/main_app/main_navigation.dart';
 import 'package:paaieds/ui/screens/auth/register_screen.dart';
