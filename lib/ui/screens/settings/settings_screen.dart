@@ -4,10 +4,12 @@ import 'package:image_picker/image_picker.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/user.dart';
 import 'package:paaieds/core/services/auth_service.dart';
+import 'package:paaieds/core/services/user_service.dart';
 import 'package:paaieds/ui/screens/auth/login_screen.dart';
 import 'package:paaieds/ui/widgets/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class SettingsScreen extends StatefulWidget {
   final UserModel user;
@@ -27,11 +29,13 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
   final ImagePicker _picker = ImagePicker();
 
   File? _profileImage;
   bool _isEditing = false;
   bool _isSaving = false;
+  UserModel? _currentUser;
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -40,6 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    _currentUser = widget.user;
     _firstNameController = TextEditingController(text: widget.user.firstName);
     _lastNameController = TextEditingController(text: widget.user.lastName);
     _emailController = TextEditingController(text: widget.user.email);
@@ -75,20 +80,156 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _saveProfile() async {
     if (_isSaving) return;
 
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+
+    if (firstName.isEmpty || lastName.isEmpty) {
+      _showSnackBar('Por favor completa todos los campos', isError: true);
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
-      // Aquí implementarías la lógica para guardar en Firestore
-      // Por ahora solo simulamos el guardado
-      await Future.delayed(const Duration(seconds: 1));
+      // Actualizar perfil en Firestore
+      final updatedUser = await _userService.updateUserProfile(
+        uid: _currentUser!.uid,
+        firstName: firstName,
+        lastName: lastName,
+        profileImage: _profileImage,
+      );
 
-      _showSnackBar('Perfil actualizado exitosamente');
-      setState(() => _isEditing = false);
+      if (updatedUser != null) {
+        setState(() {
+          _currentUser = updatedUser;
+          _isEditing = false;
+          _profileImage = null;
+        });
+        _showSnackBar('Perfil actualizado exitosamente');
+      } else {
+        _showSnackBar('Error al actualizar perfil', isError: true);
+      }
     } catch (e) {
-      _showSnackBar('Error al guardar perfil', isError: true);
+      _showSnackBar('Error al guardar: ${e.toString()}', isError: true);
     } finally {
       setState(() => _isSaving = false);
     }
+  }
+
+  Future<void> _showChangePasswordDialog() async {
+    final currentPasswordController = TextEditingController();
+    final newPasswordController = TextEditingController();
+    final confirmPasswordController = TextEditingController();
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cambiar contraseña'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: currentPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Contraseña actual',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: newPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Nueva contraseña',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: confirmPasswordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Confirmar nueva contraseña',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final current = currentPasswordController.text;
+              final newPass = newPasswordController.text;
+              final confirm = confirmPasswordController.text;
+
+              if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Completa todos los campos'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              if (newPass.length < 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'La contraseña debe tener al menos 6 caracteres',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              if (newPass != confirm) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Las contraseñas no coinciden'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              Navigator.pop(context, true);
+            },
+            child: const Text('Cambiar'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      final success = await _userService.changePassword(
+        currentPassword: currentPasswordController.text,
+        newPassword: newPasswordController.text,
+      );
+
+      if (!mounted) return;
+
+      if (success) {
+        _showSnackBar('Contraseña actualizada exitosamente');
+      } else {
+        _showSnackBar(
+          'Error al cambiar contraseña. Verifica tu contraseña actual',
+          isError: true,
+        );
+      }
+    }
+
+    currentPasswordController.dispose();
+    newPasswordController.dispose();
+    confirmPasswordController.dispose();
   }
 
   Future<void> _handleLogout() async {
@@ -171,16 +312,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       children: [
         Stack(
           children: [
-            CircleAvatar(
-              radius: 60,
-              backgroundColor: AppColors.lightBlue.withValues(alpha: 0.3),
-              backgroundImage: _profileImage != null
-                  ? FileImage(_profileImage!)
-                  : null,
-              child: _profileImage == null
-                  ? Icon(Icons.person, size: 60, color: AppColors.deepBlue)
-                  : null,
-            ),
+            _buildProfileImage(),
             if (_isEditing)
               Positioned(
                 bottom: 0,
@@ -206,7 +338,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          widget.user.displayName,
+          _currentUser?.displayName ?? '',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -215,10 +347,46 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          widget.user.email,
+          _currentUser?.email ?? '',
           style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
       ],
+    );
+  }
+
+  Widget _buildProfileImage() {
+    // Si hay una imagen seleccionada localmente
+    if (_profileImage != null) {
+      return CircleAvatar(
+        radius: 60,
+        backgroundImage: FileImage(_profileImage!),
+      );
+    }
+
+    // Si el usuario tiene una foto en Firestore
+    if (_currentUser?.photoURL != null && _currentUser!.photoURL!.isNotEmpty) {
+      return CircleAvatar(
+        radius: 60,
+        backgroundColor: AppColors.lightBlue.withValues(alpha: 0.3),
+        child: ClipOval(
+          child: CachedNetworkImage(
+            imageUrl: _currentUser!.photoURL!,
+            width: 120,
+            height: 120,
+            fit: BoxFit.cover,
+            placeholder: (context, url) => const CircularProgressIndicator(),
+            errorWidget: (context, url, error) =>
+                Icon(Icons.person, size: 60, color: AppColors.deepBlue),
+          ),
+        ),
+      );
+    }
+
+    // Avatar por defecto
+    return CircleAvatar(
+      radius: 60,
+      backgroundColor: AppColors.lightBlue.withValues(alpha: 0.3),
+      child: Icon(Icons.person, size: 60, color: AppColors.deepBlue),
     );
   }
 
@@ -244,7 +412,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           hintText: 'Correo electrónico',
           icon: Icons.email_outlined,
           keyboardType: TextInputType.emailAddress,
-          enabled: false, // Email no editable
+          enabled: false,
         ),
       ],
     );
@@ -261,8 +429,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() {
                       _isEditing = false;
                       _profileImage = null;
-                      _firstNameController.text = widget.user.firstName;
-                      _lastNameController.text = widget.user.lastName;
+                      _firstNameController.text = _currentUser!.firstName;
+                      _lastNameController.text = _currentUser!.lastName;
                     });
                   },
             style: OutlinedButton.styleFrom(
@@ -322,21 +490,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildInfoRow(
             icon: Icons.person,
             label: 'Nombre completo',
-            value: widget.user.displayName,
+            value: _currentUser?.displayName ?? '',
           ),
           const Divider(height: 24),
           _buildInfoRow(
             icon: Icons.email,
             label: 'Correo electrónico',
-            value: widget.user.email,
+            value: _currentUser?.email ?? '',
           ),
           const Divider(height: 24),
           _buildInfoRow(
             icon: Icons.verified_user,
             label: 'Proveedor',
-            value: widget.user.authProvider == 'email'
+            value: _currentUser?.authProvider == 'email'
                 ? 'Correo electrónico'
-                : widget.user.authProvider,
+                : _currentUser?.authProvider ?? '',
           ),
         ],
       ),
@@ -391,10 +559,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: Icons.lock_outline,
           title: 'Cambiar contraseña',
           subtitle: 'Actualiza tu contraseña',
-          onTap: () {
-            // Implementar cambio de contraseña
-            _showSnackBar('Próximamente disponible');
-          },
+          onTap: _showChangePasswordDialog,
           color: AppColors.skyBlue,
         ),
         const SizedBox(height: 12),
@@ -402,16 +567,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           icon: Icons.notifications_outlined,
           title: 'Notificaciones',
           subtitle: 'Configura tus preferencias',
-          onTap: () {
-            _showSnackBar('Próximamente disponible');
-          },
-          color: AppColors.highlight,
-        ),
-        const SizedBox(height: 12),
-        _buildOptionCard(
-          icon: Icons.help_outline,
-          title: 'Ayuda y soporte',
-          subtitle: 'Obtén ayuda o reporta un problema',
           onTap: () {
             _showSnackBar('Próximamente disponible');
           },
