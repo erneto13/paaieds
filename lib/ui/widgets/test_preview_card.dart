@@ -19,7 +19,7 @@ class TestPreviewCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [AppColors.oceanBlue, AppColors.primary],
+          colors: [AppColors.backgroundButtom, AppColors.primaryLight],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -52,7 +52,7 @@ class TestPreviewCard extends StatelessWidget {
   Widget _buildHeader(String topic) {
     return Row(
       children: [
-        const Icon(Icons.school, color: Colors.white, size: 28),
+        const Icon(Icons.book, color: Colors.white, size: 28),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
@@ -103,11 +103,11 @@ class TestPreviewCard extends StatelessWidget {
       height: 48,
       child: ElevatedButton.icon(
         onPressed: onStartTest,
-        icon: const Icon(Icons.play_arrow, color: AppColors.oceanBlue),
+        icon: const Icon(Icons.play_arrow, color: AppColors.backgroundButtom),
         label: Text(
           "Comenzar Test",
           style: TextStyle(
-            color: AppColors.lightBlue,
+            color: AppColors.backgroundButtom,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),

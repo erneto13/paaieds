@@ -2,12 +2,18 @@ import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
-  final VoidCallback onProfileTap;
+  final VoidCallback? onProfileTap;
+  final bool isIcon;
+  final IconData? customIcon;
+  final VoidCallback? onCustomIconTap;
 
   const CustomAppBar({
     super.key,
     required this.title,
-    required this.onProfileTap,
+    this.onProfileTap,
+    this.isIcon = false,
+    this.customIcon,
+    this.onCustomIconTap,
   });
 
   @override
@@ -48,16 +54,22 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: GestureDetector(
-                  onTap: onProfileTap,
-                  child: CircleAvatar(
-                    radius: 18,
-                    backgroundColor: Colors.blueAccent.shade100,
-                    child: Icon(
-                      Icons.person,
-                      color: Colors.blueAccent.shade700,
-                      size: 20,
-                    ),
-                  ),
+                  onTap: isIcon ? onProfileTap : onCustomIconTap,
+                  child: isIcon
+                      ? CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.blueAccent.shade100,
+                          child: Icon(
+                            Icons.person,
+                            color: Colors.blueAccent.shade700,
+                            size: 20,
+                          ),
+                        )
+                      : Icon(
+                          customIcon ?? Icons.notifications_none,
+                          size: 26,
+                          color: Colors.grey[700],
+                        ),
                 ),
               ),
             ],

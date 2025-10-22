@@ -3,6 +3,7 @@ import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/algorithm/irt_service.dart';
 import 'package:paaieds/core/models/question.dart';
 import 'package:paaieds/ui/screens/main_app/test_result.dart';
+import 'package:paaieds/ui/widgets/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/question_card.dart';
 
@@ -109,7 +110,25 @@ class _TestScreenState extends State<TestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: widget.data["topic"], onProfileTap: () {}),
+      appBar: CustomAppBar(
+        title: widget.data["topic"],
+        isIcon: false,
+        customIcon: Icons.close,
+        onCustomIconTap: () async {
+          await showDialog(
+            context: context,
+            barrierColor: Colors.black26,
+            builder: (context) => MinimalConfirmDialog(
+              title: 'Salir del test',
+              content: '¿Seguro que quieres salir? Se perderán tus respuestas.',
+              onConfirm: () {
+                Navigator.pop(context);
+                Navigator.pop(context);
+              },
+            ),
+          );
+        },
+      ),
       backgroundColor: Colors.white10,
       body: SafeArea(
         child: Padding(

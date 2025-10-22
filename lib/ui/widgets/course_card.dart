@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:paaieds/core/models/course.dart'; // Si usas el modelo
+import 'package:paaieds/core/models/course.dart';
 
 class CourseCard extends StatelessWidget {
   final Course course;
@@ -19,7 +19,7 @@ class CourseCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              backgroundColor: course.color.withOpacity(0.3),
+              backgroundColor: course.color.withValues(alpha: 0.3),
               child: Icon(Icons.code_rounded, color: course.color, size: 24),
             ),
             const SizedBox(height: 16),
@@ -35,7 +35,7 @@ class CourseCard extends StatelessWidget {
             Text(
               course.lessonsInfo,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
+                color: Colors.white.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
             ),
@@ -52,13 +52,13 @@ class CourseCard extends StatelessWidget {
                 Text(
                   course.author,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
-                )
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
