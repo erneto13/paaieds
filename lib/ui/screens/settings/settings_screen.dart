@@ -562,16 +562,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onTap: _showChangePasswordDialog,
           color: AppColors.skyBlue,
         ),
-        const SizedBox(height: 12),
-        _buildOptionCard(
-          icon: Icons.notifications_outlined,
-          title: 'Notificaciones',
-          subtitle: 'Configura tus preferencias',
-          onTap: () {
-            _showSnackBar('Próximamente disponible');
-          },
-          color: Colors.grey[600]!,
-        ),
         const SizedBox(height: 24),
         _buildOptionCard(
           icon: Icons.logout,

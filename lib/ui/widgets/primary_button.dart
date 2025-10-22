@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paaieds/config/app_colors.dart';
 
 class PrimaryButton extends StatelessWidget {
   final String text;
@@ -21,8 +22,8 @@ class PrimaryButton extends StatelessWidget {
           ? OutlinedButton(
               onPressed: onPressed,
               style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.blueAccent,
-                side: const BorderSide(color: Colors.blueAccent, width: 2),
+                foregroundColor: AppColors.backgroundButtom,
+                side: BorderSide(color: AppColors.backgroundButtom, width: 2),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12.0),
                 ),
@@ -34,9 +35,9 @@ class PrimaryButton extends StatelessWidget {
             )
           : ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blueAccent,
+                backgroundColor: AppColors.backgroundButtom,
                 elevation: 4,
-                shadowColor: Colors.blueAccent.withValues(alpha: 0.4),
+                shadowColor: AppColors.backgroundButtom.withValues(alpha: 0.4),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
