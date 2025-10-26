@@ -26,7 +26,7 @@ class ContinueLearningCard extends StatelessWidget {
           Text(
             "course.chapter",
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontSize: 16,
             ),
           ),
@@ -37,14 +37,14 @@ class ContinueLearningCard extends StatelessWidget {
               Text(
                 'Autor: da',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 14,
                 ),
               ),
               Text(
                 '${(1 * 100).toInt()}% completado',
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.8),
+                  color: Colors.white.withValues(alpha: 0.8),
                   fontSize: 14,
                 ),
               ),
@@ -53,7 +53,7 @@ class ContinueLearningCard extends StatelessWidget {
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: 100,
-            backgroundColor: Colors.white.withOpacity(0.3),
+            backgroundColor: Colors.white.withValues(alpha: 0.3),
             valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
             borderRadius: BorderRadius.circular(10),
           ),
