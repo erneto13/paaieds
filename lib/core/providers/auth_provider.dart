@@ -10,11 +10,13 @@ class AuthProvider extends ChangeNotifier {
   final UserService _userService = UserService();
 
   UserModel? _currentUser;
-  bool _isLoading = false;
+  // ignore: unused_field
+  bool _isLoading = true;
+  final bool _isAuthLoading = false; //para operaciones como login/register
   String? _errorMessage;
 
   UserModel? get currentUser => _currentUser;
-  bool get isLoading => _isLoading;
+  bool get isLoading => _isAuthLoading; //para operaciones de auth
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
 
