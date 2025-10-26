@@ -160,6 +160,7 @@ class UserService {
     required String uid,
     required String topicName,
     required Map<String, dynamic> evaluationResults,
+    List<Map<String, dynamic>>? questionsData,
   }) async {
     try {
       final assessment = {
@@ -171,6 +172,19 @@ class UserService {
         'totalQuestions': evaluationResults['totalQuestions'],
         'completedAt': FieldValue.serverTimestamp(),
       };
+
+      // Agregar las preguntas si están disponibles
+      if (questionsData != null && questionsData.isNotEmpty) {
+        assessment['questions'] = questionsData.map((q) {
+          return {
+            'question': q['question'],
+            'options': q['options'],
+            'correctAnswer': q['correctAnswer'],
+            'userAnswer': q['userAnswer'],
+            'isCorrect': q['isCorrect'],
+          };
+        }).toList();
+      }
 
       await _firestore
           .collection('users')

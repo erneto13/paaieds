@@ -93,24 +93,32 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
     notifyListeners();
 
     try {
+      // Preparar las respuestas con detalles completos
       final responses = _questions.asMap().entries.map((entry) {
         final i = entry.key;
         final q = entry.value;
+        final userAnswer = _selectedAnswers[i] ?? '';
+        final isCorrect = userAnswer == q.answer;
+
         return {
           'question': q.question,
-          'selected': _selectedAnswers[i],
-          'isCorrect': _selectedAnswers[i] == q.answer,
+          'options': q.options,
+          'correctAnswer': q.answer,
+          'userAnswer': userAnswer,
+          'selected': userAnswer,
+          'isCorrect': isCorrect,
         };
       }).toList();
 
       _evaluationResults = IRTService.evaluateAbility(responses: responses);
 
-      //guardar resultado en firestore
+      //guardar resultado en firestore con las preguntas
       if (_currentTopic != null) {
         await _userService.saveAssessmentResult(
           uid: userId,
           topicName: _currentTopic!,
           evaluationResults: _evaluationResults!,
+          questionsData: responses, 
         );
       }
 
