@@ -35,7 +35,7 @@ class WelcomeScreen extends StatelessWidget {
                 'Plataforma de aprendizaje asistida por IA para la especialización en desarrollo de software.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.7),
+                  color: Colors.white.withValues(alpha: 0.7),
                   fontSize: 16,
                 ),
               ),
