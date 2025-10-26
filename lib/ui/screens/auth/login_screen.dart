@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:animate_do/animate_do.dart';
-import 'package:motion_snackbar/motion_snackbar.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/services/auth_service.dart';
 import 'package:paaieds/ui/screens/main_app/main_navigation.dart';
 import 'package:paaieds/ui/screens/auth/register_screen.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
 import 'package:paaieds/ui/widgets/primary_button.dart';
+import 'package:paaieds/ui/widgets/snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,41 +20,30 @@ class _LoginScreenState extends State<LoginScreen>
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final AuthService _authService = AuthService();
+
   bool _isLoading = false;
-  bool _keyboardVisible = false;
   bool _isPasswordVisible = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(
-      LifecycleEventHandler(onMetricsChanged: _updateKeyboardVisibility),
-    );
-  }
-
-  void _updateKeyboardVisibility() {
-    final visible = MediaQuery.of(context).viewInsets.bottom > 0;
-    if (visible != _keyboardVisible) {
-      setState(() => _keyboardVisible = visible);
-    }
   }
 
   @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(
-      LifecycleEventHandler(onMetricsChanged: _updateKeyboardVisibility),
-    );
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _handleLogin() async {
+    if (_isLoading) return;
+
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
-      SnackbarUtils.showInfoSnackbar(
+      CustomSnackbar.showInfo(
         context: context,
         message: 'Campos faltantes',
         description: 'Por favor, completa todos los campos.',
@@ -78,58 +68,46 @@ class _LoginScreenState extends State<LoginScreen>
           MaterialPageRoute(builder: (_) => MainNavigation(user: userModel)),
         );
       } else {
-        SnackbarUtils.showErrorSnackbar(
+        CustomSnackbar.showError(
           context: context,
-          message: 'Ha ocurrido un error                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       ',
+          message: 'Error de autenticación',
           description: 'Correo o contraseña incorrectos.',
         );
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      SnackbarUtils.showErrorSnackbar(
+      CustomSnackbar.showError(
         context: context,
         message: 'Ha ocurrido un error',
-        description: 'No se pudo iniciar sesión, intente más tarde.',
+        description: '$e',
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-
     return Scaffold(
       backgroundColor: Colors.white,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOut,
-          padding: EdgeInsets.only(
-            top: _keyboardVisible ? 40 : height * 0.1,
-            left: 32,
-            right: 32,
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FadeInDown(
-                  duration: const Duration(milliseconds: 800),
-                  child: CircleAvatar(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              padding: EdgeInsets.only(left: 32, right: 32, top: 50),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircleAvatar(
                     radius: 70,
                     backgroundColor: Colors.grey.shade200,
                     backgroundImage: const AssetImage(
                       'assets/images/paaieds_logo.png',
                     ),
                   ),
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                FadeInDown(
-                  delay: const Duration(milliseconds: 200),
-                  child: Text(
+                  Text(
                     'Iniciar Sesión',
                     style: const TextStyle(
                       color: Colors.black87,
@@ -137,22 +115,16 @@ class _LoginScreenState extends State<LoginScreen>
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                const SizedBox(height: 8),
+                  const SizedBox(height: 8),
 
-                FadeInDown(
-                  delay: const Duration(milliseconds: 300),
-                  child: Text(
+                  Text(
                     'Por favor, inicia sesión para continuar',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey[600], fontSize: 16),
                   ),
-                ),
-                const SizedBox(height: 40),
+                  const SizedBox(height: 40),
 
-                SlideInUp(
-                  delay: const Duration(milliseconds: 400),
-                  child: Column(
+                  Column(
                     children: [
                       CustomTextField(
                         controller: _emailController,
@@ -185,23 +157,14 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 30),
+                  const SizedBox(height: 30),
 
-                _isLoading
-                    ? const CircularProgressIndicator()
-                    : FadeInUp(
-                        delay: const Duration(milliseconds: 600),
-                        child: PrimaryButton(
-                          text: 'Entrar',
-                          onPressed: _handleLogin,
-                        ),
-                      ),
-                const SizedBox(height: 25),
+                  _isLoading
+                      ? SpinKitCubeGrid(color: AppColors.lightBlue, size: 50)
+                      : PrimaryButton(text: 'Entrar', onPressed: _handleLogin),
+                  const SizedBox(height: 25),
 
-                FadeInUp(
-                  delay: const Duration(milliseconds: 700),
-                  child: Column(
+                  Column(
                     children: [
                       Row(
                         children: [
@@ -237,23 +200,13 @@ class _LoginScreenState extends State<LoginScreen>
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 40),
-              ],
+                  const SizedBox(height: 40),
+                ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
-  }
-}
-
-class LifecycleEventHandler extends WidgetsBindingObserver {
-  final VoidCallback onMetricsChanged;
-  LifecycleEventHandler({required this.onMetricsChanged});
-
-  @override
-  void didChangeMetrics() {
-    onMetricsChanged();
   }
 }
