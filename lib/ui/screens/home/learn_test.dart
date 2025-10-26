@@ -1,11 +1,11 @@
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
-import 'package:motion_snackbar/motion_snackbar.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/user.dart';
 import 'package:paaieds/ui/screens/main_app/test_screen.dart';
 import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
 import 'package:paaieds/ui/widgets/gradient_text.dart';
+import 'package:paaieds/ui/widgets/snackbar.dart';
 import 'package:paaieds/util/json_parser.dart';
 import '../../../api/gemini_service.dart';
 import '../../widgets/custom_app_bar.dart';
@@ -58,8 +58,7 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
       if (!mounted) {
         return;
       }
-
-      SnackbarUtils.showErrorSnackbar(
+      CustomSnackbar.showError(
         context: context,
         message: 'Ha ocurrido un error',
         description: 'Error al procesar la respuesta, intentar más tarde.',
@@ -84,28 +83,25 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
 
   @override
   Widget build(BuildContext context) {
-    final isDisabled = _loading;
-
     return Scaffold(
       appBar: CustomAppBar(
-        title: "Hola, ${widget.user.firstName}",
+        title: "Hola, ${widget.user.displayName}",
         onProfileTap: () {},
       ),
-      backgroundColor: Colors.white10,
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 🔹 Sección superior
+            Expanded(
+              flex: 2, // Ajusta este valor para el tamaño
+              child: Container(
+                color: Colors.blue[50], // 👈 Color de fondo superior
                 padding: const EdgeInsets.all(24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    FadeInDown(
-                      duration: const Duration(milliseconds: 300),
-                      child: _buildAIPoweredLabel(),
-                    ),
-                    const SizedBox(height: 20),
                     FadeInDown(
                       duration: const Duration(milliseconds: 400),
                       child: GradientText(
@@ -113,30 +109,61 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
                         gradient: const LinearGradient(
                           colors: [AppColors.deepBlue, AppColors.oceanBlue],
                         ),
-                        style: TextStyle(
-                          fontSize: 28,
+                        style: const TextStyle(
+                          fontSize: 25,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 25),
                     FadeInUp(
                       duration: const Duration(milliseconds: 500),
-                      child: _buildTextField(isDisabled),
+                      child: _buildTextField(_loading),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
                     FadeInUp(
                       duration: const Duration(milliseconds: 600),
-                      child: _buildGenerateButton(isDisabled),
+                      child: _buildGenerateButton(_loading),
                     ),
-                    const SizedBox(height: 30),
-                    _buildTestPreview(),
                   ],
                 ),
               ),
             ),
-          ),
-        ],
+
+            // 🔹 Sección inferior
+            Expanded(
+              flex: 3, // Ajusta este valor también
+              child: Container(
+                color: Colors.grey[100], // 👈 Color de fondo inferior
+                padding: const EdgeInsets.all(24),
+                width: double.infinity,
+                child: Center(
+                  child: _parsedJson == null
+                      ? Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.grey.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          height: 200,
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Aquí aparecerá tu test generado",
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                        )
+                      : _buildTestPreview(),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
       bottomNavigationBar: widget.onNavBarTap != null
           ? CustomBottomNavBar(
@@ -179,7 +206,7 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
       ),
       onSubmitted: (value) {
         if (isDisabled && value.isEmpty) {
-          SnackbarUtils.showErrorSnackbar(
+          CustomSnackbar.showError(
             context: context,
             message: 'Ha ocurrido un error',
             description:
@@ -199,7 +226,7 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
       child: ElevatedButton(
         onPressed: () {
           if (_controller.text.trim().isEmpty) {
-            SnackbarUtils.showErrorSnackbar(
+            CustomSnackbar.showError(
               context: context,
               message: 'Ha ocurrido un error',
               description: 'Por favor, ingresa un  tema para generar el test.',
@@ -275,39 +302,5 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
   void dispose() {
     _controller.dispose();
     super.dispose();
-  }
-
-  Widget _buildAIPoweredLabel() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.oceanBlue.withValues(alpha: 0.3),
-            AppColors.deepBlue.withValues(alpha: 0.2),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.deepBlue.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.auto_awesome, size: 16, color: AppColors.deepBlue),
-          const SizedBox(width: 6),
-          Text(
-            "Potenciado con IA",
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: AppColors.deepBlue,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
