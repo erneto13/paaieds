@@ -27,6 +27,7 @@ dependencies:
   http: ^1.5.0
   image_picker: ^1.2.0
   motion_snackbar: ^0.0.6
+  provider: ^6.1.5+1
 
 dev_dependencies:
   flutter_lints: ^5.0.0

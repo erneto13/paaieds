@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/core/models/user.dart';
 import 'package:paaieds/ui/widgets/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
 
 class CoursesScreen extends StatelessWidget {
-  final UserModel user;
   final Function(int) onNavBarTap;
   final int currentIndex;
 
   const CoursesScreen({
     super.key,
-    required this.user,
     required this.onNavBarTap,
     required this.currentIndex,
   });

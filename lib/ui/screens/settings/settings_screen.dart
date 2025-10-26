@@ -1,24 +1,20 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/core/models/user.dart';
-import 'package:paaieds/core/services/auth_service.dart';
-import 'package:paaieds/core/services/user_service.dart';
-import 'package:paaieds/ui/screens/auth/login_screen.dart';
 import 'package:paaieds/ui/widgets/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class SettingsScreen extends StatefulWidget {
-  final UserModel user;
   final Function(int) onNavBarTap;
   final int currentIndex;
 
   const SettingsScreen({
     super.key,
-    required this.user,
     required this.onNavBarTap,
     required this.currentIndex,
   });
@@ -28,14 +24,10 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final AuthService _authService = AuthService();
-  final UserService _userService = UserService();
   final ImagePicker _picker = ImagePicker();
 
   File? _profileImage;
   bool _isEditing = false;
-  bool _isSaving = false;
-  UserModel? _currentUser;
 
   late TextEditingController _firstNameController;
   late TextEditingController _lastNameController;
@@ -44,10 +36,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    _currentUser = widget.user;
-    _firstNameController = TextEditingController(text: widget.user.firstName);
-    _lastNameController = TextEditingController(text: widget.user.lastName);
-    _emailController = TextEditingController(text: widget.user.email);
+    //obtenemos el usuario del provider para inicializar los controllers
+    final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
+    _firstNameController = TextEditingController(text: user?.firstName ?? '');
+    _lastNameController = TextEditingController(text: user?.lastName ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
   }
 
   @override
@@ -78,8 +71,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (_isSaving) return;
-
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
 
@@ -88,31 +79,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    setState(() => _isSaving = true);
+    //usamos el authprovider para actualizar el perfil
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    try {
-      // Actualizar perfil en Firestore
-      final updatedUser = await _userService.updateUserProfile(
-        uid: _currentUser!.uid,
-        firstName: firstName,
-        lastName: lastName,
-        profileImage: _profileImage,
+    final success = await authProvider.updateProfile(
+      firstName: firstName,
+      lastName: lastName,
+      profileImage: _profileImage,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      setState(() {
+        _isEditing = false;
+        _profileImage = null;
+      });
+      _showSnackBar('Perfil actualizado exitosamente');
+    } else {
+      _showSnackBar(
+        authProvider.errorMessage ?? 'Error al actualizar perfil',
+        isError: true,
       );
-
-      if (updatedUser != null) {
-        setState(() {
-          _currentUser = updatedUser;
-          _isEditing = false;
-          _profileImage = null;
-        });
-        _showSnackBar('Perfil actualizado exitosamente');
-      } else {
-        _showSnackBar('Error al actualizar perfil', isError: true);
-      }
-    } catch (e) {
-      _showSnackBar('Error al guardar: ${e.toString()}', isError: true);
-    } finally {
-      setState(() => _isSaving = false);
     }
   }
 
@@ -210,7 +198,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (result == true) {
-      final success = await _userService.changePassword(
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+      final success = await authProvider.changePassword(
         currentPassword: currentPasswordController.text,
         newPassword: newPasswordController.text,
       );
@@ -221,7 +211,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _showSnackBar('Contraseña actualizada exitosamente');
       } else {
         _showSnackBar(
-          'Error al cambiar contraseña. Verifica tu contraseña actual',
+          authProvider.errorMessage ??
+              'Error al cambiar contraseña. Verifica tu contraseña actual',
           isError: true,
         );
       }
@@ -253,14 +244,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     if (confirm == true) {
-      await _authService.signOut();
-      if (!mounted) return;
-
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-        (route) => false,
-      );
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      await authProvider.signOut();
+      //el authwrapper redirigira automaticamente al login
     }
   }
 
@@ -277,42 +263,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(title: "Ajustes", onProfileTap: () {}),
-      backgroundColor: Colors.white10,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              _buildProfileSection(),
-              const SizedBox(height: 30),
-              if (_isEditing) ...[
-                _buildEditForm(),
-                const SizedBox(height: 20),
-                _buildActionButtons(),
-              ] else ...[
-                _buildInfoSection(),
-                const SizedBox(height: 30),
-                _buildSettingsOptions(),
-              ],
-            ],
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        final currentUser = authProvider.currentUser;
+
+        return Scaffold(
+          appBar: CustomAppBar(title: "Ajustes", onProfileTap: () {}),
+          backgroundColor: Colors.white10,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  _buildProfileSection(currentUser, authProvider.isLoading),
+                  const SizedBox(height: 30),
+                  if (_isEditing) ...[
+                    _buildEditForm(authProvider.isLoading),
+                    const SizedBox(height: 20),
+                    _buildActionButtons(authProvider.isLoading, currentUser),
+                  ] else ...[
+                    _buildInfoSection(currentUser),
+                    const SizedBox(height: 30),
+                    _buildSettingsOptions(),
+                  ],
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: widget.currentIndex,
-        onTap: widget.onNavBarTap,
-      ),
+          bottomNavigationBar: CustomBottomNavBar(
+            currentIndex: widget.currentIndex,
+            onTap: widget.onNavBarTap,
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildProfileSection() {
+  Widget _buildProfileSection(dynamic currentUser, bool isLoading) {
     return Column(
       children: [
         Stack(
           children: [
-            _buildProfileImage(),
+            _buildProfileImage(currentUser),
             if (_isEditing)
               Positioned(
                 bottom: 0,
@@ -338,7 +330,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          _currentUser?.displayName ?? '',
+          currentUser?.displayName ?? 'Usuario',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -347,15 +339,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
         const SizedBox(height: 4),
         Text(
-          _currentUser?.email ?? '',
+          currentUser?.email ?? '',
           style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
       ],
     );
   }
 
-  Widget _buildProfileImage() {
-    // Si hay una imagen seleccionada localmente
+  Widget _buildProfileImage(dynamic currentUser) {
+    //si hay una imagen seleccionada localmente
     if (_profileImage != null) {
       return CircleAvatar(
         radius: 60,
@@ -363,14 +355,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
 
-    // Si el usuario tiene una foto en Firestore
-    if (_currentUser?.photoURL != null && _currentUser!.photoURL!.isNotEmpty) {
+    //si el usuario tiene una foto en firestore
+    if (currentUser?.photoURL != null && currentUser!.photoURL!.isNotEmpty) {
       return CircleAvatar(
         radius: 60,
         backgroundColor: AppColors.lightBlue.withValues(alpha: 0.3),
         child: ClipOval(
           child: CachedNetworkImage(
-            imageUrl: _currentUser!.photoURL!,
+            imageUrl: currentUser.photoURL!,
             width: 120,
             height: 120,
             fit: BoxFit.cover,
@@ -382,7 +374,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       );
     }
 
-    // Avatar por defecto
+    //avatar por defecto
     return CircleAvatar(
       radius: 60,
       backgroundColor: AppColors.lightBlue.withValues(alpha: 0.3),
@@ -390,21 +382,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildEditForm() {
+  Widget _buildEditForm(bool isSaving) {
     return Column(
       children: [
         CustomTextField(
           controller: _firstNameController,
           hintText: 'Nombre',
           icon: Icons.person_outline,
-          enabled: !_isSaving,
+          enabled: !isSaving,
         ),
         const SizedBox(height: 16),
         CustomTextField(
           controller: _lastNameController,
           hintText: 'Apellido',
           icon: Icons.person_outline,
-          enabled: !_isSaving,
+          enabled: !isSaving,
         ),
         const SizedBox(height: 16),
         CustomTextField(
@@ -418,19 +410,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildActionButtons() {
+  Widget _buildActionButtons(bool isSaving, dynamic currentUser) {
     return Row(
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: _isSaving
+            onPressed: isSaving
                 ? null
                 : () {
                     setState(() {
                       _isEditing = false;
                       _profileImage = null;
-                      _firstNameController.text = _currentUser!.firstName;
-                      _lastNameController.text = _currentUser!.lastName;
+                      _firstNameController.text = currentUser?.firstName ?? '';
+                      _lastNameController.text = currentUser?.lastName ?? '';
                     });
                   },
             style: OutlinedButton.styleFrom(
@@ -447,7 +439,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: _isSaving ? null : _saveProfile,
+            onPressed: isSaving ? null : _saveProfile,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -455,7 +447,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: _isSaving
+            child: isSaving
                 ? const SizedBox(
                     height: 20,
                     width: 20,
@@ -477,7 +469,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildInfoSection() {
+  Widget _buildInfoSection(dynamic currentUser) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -490,21 +482,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildInfoRow(
             icon: Icons.person,
             label: 'Nombre completo',
-            value: _currentUser?.displayName ?? '',
+            value: currentUser?.displayName ?? 'N/A',
           ),
           const Divider(height: 24),
           _buildInfoRow(
             icon: Icons.email,
             label: 'Correo electrónico',
-            value: _currentUser?.email ?? '',
+            value: currentUser?.email ?? 'N/A',
           ),
           const Divider(height: 24),
           _buildInfoRow(
             icon: Icons.verified_user,
             label: 'Proveedor',
-            value: _currentUser?.authProvider == 'email'
+            value: currentUser?.authProvider == 'email'
                 ? 'Correo electrónico'
-                : _currentUser?.authProvider ?? '',
+                : currentUser?.authProvider ?? 'N/A',
           ),
         ],
       ),

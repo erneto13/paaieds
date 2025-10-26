@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/core/services/auth_service.dart';
-import 'package:paaieds/ui/screens/main_app/main_navigation.dart';
 import 'package:paaieds/ui/screens/auth/register_screen.dart';
 import 'package:paaieds/ui/widgets/custom_text_field.dart';
 import 'package:paaieds/ui/widgets/primary_button.dart';
@@ -15,19 +15,10 @@ class LoginScreen extends StatefulWidget {
   State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen>
-    with SingleTickerProviderStateMixin {
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
-
-  bool _isLoading = false;
   bool _isPasswordVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-  }
 
   @override
   void dispose() {
@@ -36,9 +27,7 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  Future<void> _handleLogin() async {
-    if (_isLoading) return;
-
+  Future<void> _handleLogin(BuildContext context) async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
@@ -51,50 +40,39 @@ class _LoginScreenState extends State<LoginScreen>
       return;
     }
 
-    setState(() => _isLoading = true);
+    //accedemos al authprovider sin escuchar cambios (listen: false)
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    try {
-      final userModel = await _authService.signInWithEmail(
-        email: email,
-        password: password,
-      );
+    final success = await authProvider.signInWithEmail(
+      email: email,
+      password: password,
+    );
 
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+    if (!mounted) return;
 
-      if (userModel != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => MainNavigation(user: userModel)),
-        );
-      } else {
-        CustomSnackbar.showError(
-          context: context,
-          message: 'Error de autenticación',
-          description: 'Correo o contraseña incorrectos.',
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
+    if (!success) {
       CustomSnackbar.showError(
+        // ignore: use_build_context_synchronously
         context: context,
-        message: 'Ha ocurrido un error',
-        description: '$e',
+        message: 'Error de autenticación',
+        description:
+            authProvider.errorMessage ?? 'Correo o contraseña incorrectos',
       );
     }
+    //si el login es exitoso, el authwrapper redirigira automaticamente
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              padding: EdgeInsets.only(left: 32, right: 32, top: 50),
+    //escuchamos cambios en el authprovider para mostrar el loading
+    return Consumer<AuthProvider>(
+      builder: (context, authProvider, child) {
+        return Scaffold(
+          backgroundColor: Colors.white,
+          resizeToAvoidBottomInset: true,
+          body: SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.only(left: 32, right: 32, top: 50),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -106,24 +84,21 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                   const SizedBox(height: 30),
-
-                  Text(
+                  const Text(
                     'Iniciar Sesión',
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: Colors.black87,
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 8),
-
                   Text(
                     'Por favor, inicia sesión para continuar',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey[600], fontSize: 16),
                   ),
                   const SizedBox(height: 40),
-
                   Column(
                     children: [
                       CustomTextField(
@@ -131,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen>
                         hintText: 'Correo electrónico',
                         icon: Icons.email_outlined,
                         keyboardType: TextInputType.emailAddress,
-                        enabled: !_isLoading,
+                        enabled: !authProvider.isLoading,
                       ),
                       const SizedBox(height: 20),
                       CustomTextField(
@@ -139,7 +114,7 @@ class _LoginScreenState extends State<LoginScreen>
                         hintText: 'Contraseña',
                         icon: Icons.lock_outline,
                         isPassword: !_isPasswordVisible,
-                        enabled: !_isLoading,
+                        enabled: !authProvider.isLoading,
                         suffixIcon: IconButton(
                           icon: Icon(
                             _isPasswordVisible
@@ -153,17 +128,21 @@ class _LoginScreenState extends State<LoginScreen>
                             });
                           },
                         ),
-                        onSubmitted: (_) => _handleLogin(),
+                        onSubmitted: (_) => _handleLogin(context),
                       ),
                     ],
                   ),
                   const SizedBox(height: 30),
-
-                  _isLoading
-                      ? SpinKitCubeGrid(color: AppColors.lightBlue, size: 50)
-                      : PrimaryButton(text: 'Entrar', onPressed: _handleLogin),
+                  authProvider.isLoading
+                      ? const SpinKitCubeGrid(
+                          color: AppColors.lightBlue,
+                          size: 50,
+                        )
+                      : PrimaryButton(
+                          text: 'Entrar',
+                          onPressed: () => _handleLogin(context),
+                        ),
                   const SizedBox(height: 25),
-
                   Column(
                     children: [
                       Row(
@@ -188,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               );
                             },
-                            child: Text(
+                            child: const Text(
                               'Regístrate',
                               style: TextStyle(
                                 color: Colors.blueAccent,
@@ -204,9 +183,9 @@ class _LoginScreenState extends State<LoginScreen>
                 ],
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

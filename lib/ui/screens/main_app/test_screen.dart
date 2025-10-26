@@ -1,212 +1,171 @@
 import 'package:flutter/material.dart';
+import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:paaieds/core/providers/test_provider.dart';
+import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/core/algorithm/irt_service.dart';
-import 'package:paaieds/core/models/question.dart';
 import 'package:paaieds/ui/screens/main_app/test_result.dart';
 import 'package:paaieds/ui/widgets/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/question_card.dart';
 
-class TestScreen extends StatefulWidget {
-  final Map<String, dynamic> data;
+class TestScreen extends StatelessWidget {
+  const TestScreen({super.key});
 
-  const TestScreen({super.key, required this.data});
+  Future<void> _handleSubmit(BuildContext context) async {
+    final testProvider = Provider.of<TestProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-  @override
-  State<TestScreen> createState() => _TestScreenState();
-}
-
-class _TestScreenState extends State<TestScreen> {
-  late List<QuestionModel> questions;
-  Map<int, String> selectedAnswers = {};
-  bool _isEvaluating = false;
-
-  @override
-  void initState() {
-    super.initState();
-    questions = (widget.data["questions"] as List)
-        .map((q) => QuestionModel.fromJson(q))
-        .toList();
-  }
-
-  bool get allAnswered => selectedAnswers.length == questions.length;
-
-  void _handleAnswer(int index, String answer) {
-    setState(() {
-      selectedAnswers[index] = answer;
-    });
-  }
-
-  Future<void> _sendAnswers() async {
-    if (_isEvaluating) return;
-
-    setState(() => _isEvaluating = true);
-
-    try {
-      final responses = questions.asMap().entries.map((entry) {
-        final i = entry.key;
-        final q = entry.value;
-        return {
-          'question': q.question,
-          'selected': selectedAnswers[i],
-          'isCorrect': selectedAnswers[i] == q.answer,
-        };
-      }).toList();
-
-      // Evaluar con IRT
-      final evaluationResults = IRTService.evaluateAbility(
-        responses: responses,
+    if (!testProvider.allAnswered) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Debes responder todas las preguntas'),
+          backgroundColor: Colors.orange,
+        ),
       );
+      return;
+    }
 
-      // final userId = 'user_123'; // Obtenlo de Firebase Auth
+    //evaluar usando el uid del usuario actual
+    final userId = authProvider.currentUser?.uid ?? '';
+    final success = await testProvider.evaluateTest(userId);
 
-      // await UserProfileService().saveAssessmentResult(
-      //   userId: userId,
-      //   topicName: widget.data["topic"],
-      //   evaluationResults: evaluationResults,
-      // );
+    if (!context.mounted) return;
 
-      // Navegar a la pantalla de resultados
-      if (!mounted) return;
-
+    if (success) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (context) => TestResultsScreen(
-            topic: widget.data["topic"],
-            evaluationResults: evaluationResults,
+            topic: testProvider.currentTopic ?? 'Test',
+            evaluationResults: testProvider.evaluationResults!,
             onGenerateRoadmap: () async {
-              // Aquí generarás el roadmap con la IA
-              _generateRoadmap(widget.data["topic"], evaluationResults);
+              //aqui generaras el roadmap con la ia
+              debugPrint("Generando roadmap...");
             },
           ),
         ),
       );
-    } catch (e) {
-      if (!mounted) return;
-
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error al evaluar: $e"),
+          content: Text(
+            testProvider.errorMessage ?? 'Error al evaluar el test',
+          ),
           backgroundColor: Colors.red,
         ),
       );
-    } finally {
-      if (mounted) {
-        setState(() => _isEvaluating = false);
-      }
     }
-  }
-
-  Future<void> _generateRoadmap(
-    String topic,
-    Map<String, dynamic> evaluationResults,
-  ) async {
-    debugPrint(
-      "Generando roadmap para $topic con nivel ${evaluationResults['level']}",
-    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: CustomAppBar(
-        title: widget.data["topic"],
-        isIcon: false,
-        customIcon: Icons.close,
-        onCustomIconTap: () async {
-          await showDialog(
-            context: context,
-            barrierColor: Colors.black26,
-            builder: (context) => MinimalConfirmDialog(
-              title: 'Salir del test',
-              content: '¿Seguro que quieres salir? Se perderán tus respuestas.',
-              onConfirm: () {
-                Navigator.pop(context);
-                Navigator.pop(context);
-              },
-            ),
-          );
-        },
-      ),
-      backgroundColor: Colors.white10,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: questions.length,
-                  itemBuilder: (context, index) {
-                    final q = questions[index];
-                    return QuestionCard(
-                      question: q,
-                      index: index,
-                      onAnswerSelected: (answer) =>
-                          _handleAnswer(index, answer),
-                    );
+    return Consumer<TestProvider>(
+      builder: (context, testProvider, child) {
+        return Scaffold(
+          appBar: CustomAppBar(
+            title: testProvider.currentTopic ?? "Test",
+            isIcon: false,
+            customIcon: Icons.close,
+            onCustomIconTap: () async {
+              await showDialog(
+                context: context,
+                barrierColor: Colors.black26,
+                builder: (context) => MinimalConfirmDialog(
+                  title: 'Salir del test',
+                  content:
+                      '¿Seguro que quieres salir? Se perderán tus respuestas.',
+                  onConfirm: () {
+                    //limpiar el estado del test al salir
+                    testProvider.reset();
+                    Navigator.pop(context);
+                    Navigator.pop(context);
                   },
                 ),
-              ),
-              const SizedBox(height: 8),
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: allAnswered ? 1.0 : 0.4,
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: allAnswered && !_isEvaluating
-                        ? _sendAnswers
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      disabledBackgroundColor: AppColors.lightBlue.withValues(
-                        alpha: 0.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+              );
+            },
+          ),
+          backgroundColor: Colors.white10,
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: testProvider.questions.length,
+                      itemBuilder: (context, index) {
+                        final q = testProvider.questions[index];
+                        return QuestionCard(
+                          question: q,
+                          index: index,
+                          onAnswerSelected: (answer) {
+                            //registrar la respuesta en el provider
+                            testProvider.selectAnswer(index, answer);
+                          },
+                        );
+                      },
                     ),
-                    child: _isEvaluating
-                        ? Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.5,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                "Evaluando...",
+                  ),
+                  const SizedBox(height: 8),
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: testProvider.allAnswered ? 1.0 : 0.4,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed:
+                            testProvider.allAnswered && !testProvider.isLoading
+                            ? () => _handleSubmit(context)
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          disabledBackgroundColor: AppColors.lightBlue
+                              .withValues(alpha: 0.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: testProvider.isLoading
+                            ? Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.5,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    "Evaluando...",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Text(
+                                "Enviar respuestas",
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.w600,
+                                  fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
-                            ],
-                          )
-                        : Text(
-                            "Enviar respuestas",
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                            ),
-                          ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:paaieds/ui/screens/auth/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:paaieds/core/providers/test_provider.dart';
+import 'package:paaieds/util/auth_wrapper.dart';
+import 'package:provider/provider.dart';
 import 'package:paaieds/firebase_options.dart';
 
 void main() async {
@@ -18,13 +21,19 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'paaieds',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(
-        useMaterial3: true,
-      ).copyWith(textTheme: Typography().white.apply(fontFamily: 'Montserrat')),
-      home: const LoginScreen(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => TestProvider()),
+      ],
+      child: MaterialApp(
+        title: 'paaieds',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData.dark(useMaterial3: true).copyWith(
+          textTheme: Typography().white.apply(fontFamily: 'Montserrat'),
+        ),
+        home: const AuthWrapper(),
+      ),
     );
   }
 }
