@@ -21,10 +21,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'paaieds',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark(useMaterial3: true).copyWith(
-        textTheme: Typography().white.apply(fontFamily: 'Montserrat'),
-        scaffoldBackgroundColor: const Color(0xFF131F24),
-      ),
+      theme: ThemeData.dark(
+        useMaterial3: true,
+      ).copyWith(textTheme: Typography().white.apply(fontFamily: 'Montserrat')),
       home: const LoginScreen(),
     );
   }
