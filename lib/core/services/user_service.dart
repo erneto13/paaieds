@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/models/user.dart';
 
 class UserService {
@@ -171,9 +172,11 @@ class UserService {
         'completedAt': FieldValue.serverTimestamp(),
       };
 
-      await _firestore.collection('users').doc(uid).update({
-        'assessments': FieldValue.arrayUnion([assessment]),
-      });
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('assessments')
+          .add(assessment);
 
       return true;
     } catch (e) {
@@ -182,21 +185,38 @@ class UserService {
     }
   }
 
-  //obtiene todos los assessments del usuario
   Future<List<Map<String, dynamic>>> getUserAssessments(String uid) async {
     try {
-      final doc = await _firestore.collection('users').doc(uid).get();
-      final data = doc.data();
+      final querySnapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('assessments')
+          .orderBy('completedAt', descending: true)
+          .get();
 
-      if (data == null || !data.containsKey('assessments')) {
-        return [];
-      }
-
-      return List<Map<String, dynamic>>.from(data['assessments']);
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+        return data;
+      }).toList();
     } catch (e) {
       print('Error al obtener evaluaciones: $e');
       return [];
     }
+  }
+
+  Stream<List<TestResult>> userTestHistoryStream(String uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('assessments')
+        .orderBy('completedAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            return TestResult.fromMap(doc.data(), doc.id);
+          }).toList();
+        });
   }
 
   //guarda un roadmap generado en el perfil del usuario

@@ -9,8 +9,6 @@ class UserModel {
   final String? photoURL;
   final Timestamp? createdAt;
   final String authProvider;
-  final List<dynamic> assessments;
-  final List<dynamic> roadmaps;
 
   UserModel({
     required this.uid,
@@ -21,10 +19,7 @@ class UserModel {
     this.photoURL,
     this.createdAt,
     required this.authProvider,
-    List<dynamic>? assessments,
-    List<dynamic>? roadmaps,
-  }) : assessments = assessments ?? [],
-       roadmaps = roadmaps ?? [];
+  });
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>? ?? {};
@@ -38,8 +33,6 @@ class UserModel {
       photoURL: data['photoURL'],
       createdAt: data['createdAt'] as Timestamp?,
       authProvider: data['authProvider'] ?? 'email',
-      assessments: List<dynamic>.from(data['assessments'] ?? []),
-      roadmaps: List<dynamic>.from(data['roadmaps'] ?? []),
     );
   }
 
@@ -52,8 +45,6 @@ class UserModel {
       'displayName': displayName,
       if (photoURL != null) 'photoURL': photoURL,
       'authProvider': authProvider,
-      'assessments': assessments,
-      'roadmaps': roadmaps,
     };
   }
 
@@ -66,8 +57,6 @@ class UserModel {
     String? photoURL,
     Timestamp? createdAt,
     String? authProvider,
-    List<dynamic>? assessments,
-    List<dynamic>? roadmaps,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -78,8 +67,6 @@ class UserModel {
       photoURL: photoURL ?? this.photoURL,
       createdAt: createdAt ?? this.createdAt,
       authProvider: authProvider ?? this.authProvider,
-      assessments: assessments ?? this.assessments,
-      roadmaps: roadmaps ?? this.roadmaps,
     );
   }
 }

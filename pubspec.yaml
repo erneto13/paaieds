@@ -26,6 +26,7 @@ dependencies:
   google_fonts: ^6.2.1
   http: ^1.5.0
   image_picker: ^1.2.0
+  intl: ^0.20.2
   motion_snackbar: ^0.0.6
   provider: ^6.1.5+1
 
