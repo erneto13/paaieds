@@ -4,12 +4,10 @@ import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/ui/screens/main_app/test_screen.dart';
 import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
 import 'package:paaieds/ui/widgets/gradient_text.dart';
 import 'package:paaieds/ui/widgets/snackbar.dart';
 import '../../widgets/custom_app_bar.dart';
-import '../../widgets/test_preview_card.dart';
 
 class LearnTestScreen extends StatefulWidget {
   final Function(int)? onNavBarTap;
@@ -65,89 +63,59 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
       ),
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            //seccion superior
-            Expanded(
-              flex: 2,
-              child: Container(
-                color: Colors.blue[50],
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    FadeInDown(
-                      duration: const Duration(milliseconds: 400),
-                      child: GradientText(
-                        "¿Qué quieres aprender?",
-                        gradient: const LinearGradient(
-                          colors: [AppColors.deepBlue, AppColors.oceanBlue],
-                        ),
-                        style: const TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 25),
-                    FadeInUp(
-                      duration: const Duration(milliseconds: 500),
-                      child: _buildTextField(context),
-                    ),
-                    const SizedBox(height: 16),
-                    FadeInUp(
-                      duration: const Duration(milliseconds: 600),
-                      child: _buildGenerateButton(context),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            //seccion inferior - aqui escuchamos cambios del testprovider
-            Expanded(
-              flex: 3,
-              child: Container(
-                color: Colors.grey[100],
-                padding: const EdgeInsets.all(24),
-                width: double.infinity,
-                child: Center(
-                  child: Consumer<TestProvider>(
-                    builder: (context, testProvider, child) {
-                      //si no hay preguntas generadas, mostrar placeholder
-                      if (testProvider.questions.isEmpty) {
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.grey.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          height: 200,
-                          alignment: Alignment.center,
-                          child: Text(
-                            "Aquí aparecerá tu test generado",
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 16,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        );
-                      }
-
-                      //si hay preguntas, mostrar el preview
-                      return _buildTestPreview(testProvider);
-                    },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              FadeInDown(
+                duration: const Duration(milliseconds: 400),
+                child: GradientText(
+                  "¿Qué quieres aprender?",
+                  gradient: const LinearGradient(
+                    colors: [AppColors.deepBlue, AppColors.oceanBlue],
+                  ),
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 25),
+              FadeInUp(
+                duration: const Duration(milliseconds: 500),
+                child: _buildTextField(context),
+              ),
+              const SizedBox(height: 16),
+              FadeInUp(
+                duration: const Duration(milliseconds: 600),
+                child: _buildGenerateButton(context),
+              ),
+              const SizedBox(height: 40),
+              Center(
+                child: Container(
+                  height: 180,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    "Aquí aparecerá tu test generado",
+                    style: TextStyle(
+                      color: Colors.blueGrey[400],
+                      fontSize: 16,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
+
       bottomNavigationBar: widget.onNavBarTap != null
           ? CustomBottomNavBar(
               currentIndex: widget.currentIndex ?? 0,
@@ -253,35 +221,6 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildTestPreview(TestProvider testProvider) {
-    final parsedJson = {
-      "topic": testProvider.currentTopic ?? "Test",
-      "questions": testProvider.questions
-          .map(
-            (q) => {
-              "question": q.question,
-              "options": q.options,
-              "answer": q.answer,
-            },
-          )
-          .toList(),
-    };
-
-    return SlideInUp(
-      key: ValueKey(testProvider.currentTopic),
-      duration: const Duration(milliseconds: 400),
-      child: TestPreviewCard(
-        parsedJson: parsedJson,
-        onStartTest: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const TestScreen()),
-          );
-        },
-      ),
     );
   }
 
