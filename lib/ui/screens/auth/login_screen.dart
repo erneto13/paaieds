@@ -40,7 +40,6 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    //accedemos al authprovider sin escuchar cambios (listen: false)
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     final success = await authProvider.signInWithEmail(
@@ -52,19 +51,16 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!success) {
       CustomSnackbar.showError(
-        // ignore: use_build_context_synchronously
         context: context,
         message: 'Error de autenticación',
         description:
             authProvider.errorMessage ?? 'Correo o contraseña incorrectos',
       );
     }
-    //si el login es exitoso, el authwrapper redirigira automaticamente
   }
 
   @override
   Widget build(BuildContext context) {
-    //escuchamos cambios en el authprovider para mostrar el loading
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         return Scaffold(
@@ -160,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           GestureDetector(
                             onTap: () {
-                              Navigator.pushReplacement(
+                              Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => const RegisterScreen(),
