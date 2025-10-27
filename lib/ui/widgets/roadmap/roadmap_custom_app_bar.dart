@@ -4,18 +4,18 @@ import 'package:paaieds/config/app_colors.dart';
 class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String topic;
   final String level;
-  final int completedSections;
-  final int totalSections;
-  final int lives;
+  final int? completedSections;
+  final int? totalSections;
+  final int? lives;
   final VoidCallback onClose;
 
   const RoadmapAppBar({
     super.key,
     required this.topic,
     required this.level,
-    required this.completedSections,
-    required this.totalSections,
-    required this.lives,
+    this.completedSections,
+    this.totalSections,
+    this.lives,
     required this.onClose,
   });
 
@@ -55,7 +55,7 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Nivel: $level',
+                      level,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
@@ -64,67 +64,72 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
 
               const Spacer(),
 
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.lightBlue.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.lightBlue.withValues(alpha: 0.4),
+              if (completedSections != null && totalSections != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
                   ),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.format_list_numbered,
-                      size: 16,
-                      color: AppColors.primary,
+                  decoration: BoxDecoration(
+                    color: AppColors.lightBlue.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.lightBlue.withValues(alpha: 0.4),
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$completedSections/$totalSections',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.format_list_numbered,
+                        size: 16,
                         color: AppColors.primary,
                       ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.red.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.red.withValues(alpha: 0.4)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.favorite, size: 16, color: Colors.red),
-                    const SizedBox(width: 4),
-                    Text(
-                      '$lives',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                      const SizedBox(width: 6),
+                      Text(
+                        '$completedSections/$totalSections',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              const SizedBox(width: 12),
+              if (completedSections != null && totalSections != null)
+                const SizedBox(width: 12),
+
+              if (lives != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.favorite, size: 16, color: Colors.red),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$lives',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.red,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+              if (lives != null) const SizedBox(width: 12),
 
               GestureDetector(
                 onTap: onClose,

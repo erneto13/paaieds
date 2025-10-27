@@ -139,6 +139,7 @@ Traducción realizada con la versión gratuita del traductor DeepL.com
     notifyListeners();
 
     try {
+      print('📥 Recargando roadmap desde Firestore...');
       final roadmap = await _userService.getRoadmap(
         uid: userId,
         roadmapId: roadmapId,
@@ -149,11 +150,16 @@ Traducción realizada con la versión gratuita del traductor DeepL.com
       }
 
       _currentRoadmap = roadmap;
+      print(
+        '✅ Roadmap recargado con ${roadmap.completedSections}/${roadmap.totalSections} secciones completadas',
+      );
+
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = 'Error loading roadmap: $e';
+      print('❌ Error al recargar roadmap: $e');
       _isLoading = false;
       notifyListeners();
       return false;

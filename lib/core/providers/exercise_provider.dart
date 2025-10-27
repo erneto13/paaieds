@@ -37,13 +37,27 @@ class ExerciseProvider extends ChangeNotifier {
     return _exercises[_currentExerciseIndex];
   }
 
-  //genera ejercicios para una sección dada
   Future<bool> generateExercisesForSection({
     required String userId,
     required String roadmapId,
     required RoadmapSection section,
     required double currentTheta,
   }) async {
+    //validar que los ids no esten vacios
+    if (userId.isEmpty || roadmapId.isEmpty) {
+      _errorMessage = 'IDs de usuario o roadmap inválidos';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    //limpiamos el estado anterior ANTES de cargar nuevos ejercicios
+    _exercises = [];
+    _currentProgress = null;
+    _currentExerciseIndex = 0;
+    _showingResult = false;
+    _isCorrectAnswer = false;
+
     _isLoading = true;
     _errorMessage = null;
     _currentUserId = userId;
@@ -51,7 +65,11 @@ class ExerciseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('VERIFICANDO EJERCICIOS GUARDADOS :: ${section.subtopic}');
+
+      print('🔍 VERIFICANDO EJERCICIOS GUARDADOS');
+      print('   Usuario: $userId');
+      print('   Roadmap: $roadmapId');
+      print('   Sección: ${section.id} - ${section.subtopic}');
 
       List<Exercise>? savedExercises;
       SectionProgress? savedProgress;
@@ -69,9 +87,26 @@ class ExerciseProvider extends ChangeNotifier {
           sectionId: section.id,
         );
       } catch (e) {
-        print(' PRIMERA VEZ :: SE GENERARÁN EJERCICIOS NUEVOS');
+        print('ℹ️ PRIMERA VEZ :: SE GENERARÁN EJERCICIOS NUEVOS');
+        print('   Razón: $e');
         savedExercises = null;
         savedProgress = null;
+      }
+
+      if (savedExercises != null && savedExercises.isNotEmpty) {
+        //si ya existe progreso, verificar si la seccion esta completa
+        if (savedProgress != null &&
+            savedProgress.totalAttempts >= savedExercises.length) {
+          print('⚠️ SECCIÓN YA COMPLETADA');
+          print(
+            '   Progreso: ${savedProgress.totalAttempts}/${savedExercises.length}',
+          );
+          print('   Regenerando ejercicios nuevos...');
+
+          //forzar generacion de nuevos ejercicios
+          savedExercises = null;
+          savedProgress = null;
+        }
       }
 
       if (savedExercises != null && savedExercises.isNotEmpty) {
@@ -91,12 +126,12 @@ class ExerciseProvider extends ChangeNotifier {
             ? _currentProgress!.totalAttempts
             : 0;
 
-        print('CARGADOS ${_exercises.length} EJERCICIOS GUARDADOS');
+        print('✅ CARGADOS ${_exercises.length} EJERCICIOS GUARDADOS');
         print(
-          'Progreso: ${_currentProgress!.totalAttempts}/${_exercises.length}',
+          '   Progreso: ${_currentProgress!.totalAttempts}/${_exercises.length}',
         );
       } else {
-        print('Generando nuevos ejercicios para: ${section.subtopic}');
+        print('📝 Generando nuevos ejercicios para: ${section.subtopic}');
 
         _exercises = await _exerciseService.generateExercises(
           subtopic: section.subtopic,
@@ -119,7 +154,11 @@ class ExerciseProvider extends ChangeNotifier {
 
         _currentExerciseIndex = 0;
 
-        print('Guardando ${_exercises.length} ejercicios...');
+        print('💾 Guardando ${_exercises.length} ejercicios...');
+        print(
+          '   Path: users/$userId/roadmaps/$roadmapId/exercises/${section.id}',
+        );
+
         final saved = await _userService.saveSectionExercises(
           uid: userId,
           roadmapId: roadmapId,
@@ -128,10 +167,10 @@ class ExerciseProvider extends ChangeNotifier {
         );
 
         if (saved) {
-          print('Ejercicios guardados exitosamente');
+          print('✅ Ejercicios guardados exitosamente');
         } else {
           print(
-            'No se pudieron guardar los ejercicios (pero se pueden usar)',
+            '⚠️ No se pudieron guardar los ejercicios (pero se pueden usar)',
           );
         }
       }
@@ -139,16 +178,16 @@ class ExerciseProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return true;
-    } catch (e) {
+    } catch (e, stackTrace) {
       _errorMessage = 'Error al generar ejercicios: $e';
-      print('$_errorMessage');
+      print('❌ ERROR CRÍTICO: $_errorMessage');
+      print('❌ Stack trace: $stackTrace');
       _isLoading = false;
       notifyListeners();
       return false;
     }
   }
 
-  //registra la respuesta del usuario
   void submitAnswer(String userAnswer) {
     if (currentExercise == null || _currentProgress == null) return;
 
@@ -182,6 +221,7 @@ class ExerciseProvider extends ChangeNotifier {
     if (_currentUserId == null ||
         _currentRoadmapId == null ||
         _currentProgress == null) {
+      print('⚠️ No se puede guardar progreso: IDs nulos');
       return;
     }
 
@@ -192,7 +232,9 @@ class ExerciseProvider extends ChangeNotifier {
         sectionId: _currentProgress!.sectionId,
         progress: _currentProgress!,
       );
+      print('✅ Progreso guardado correctamente');
     } catch (e) {
+      print('❌ Error al guardar progreso: $e');
       notifyListeners();
     }
   }
@@ -313,8 +355,6 @@ class ExerciseProvider extends ChangeNotifier {
     _errorMessage = null;
     _showingResult = false;
     _isCorrectAnswer = false;
-    _currentUserId = null;
-    _currentRoadmapId = null;
     notifyListeners();
   }
 
@@ -326,5 +366,11 @@ class ExerciseProvider extends ChangeNotifier {
   void hideResult() {
     _showingResult = false;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    print('🗑️ ExerciseProvider disposed');
+    super.dispose();
   }
 }

@@ -10,8 +10,8 @@ import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/ui/widgets/exercises/block_order_exercise.dart';
 import 'package:paaieds/ui/widgets/exercises/code_exercise.dart';
 import 'package:paaieds/ui/widgets/exercises/multiple_choice_exercise.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
-import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/util/snackbar.dart';
 import 'package:provider/provider.dart';
 
@@ -54,15 +54,37 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final userId = authProvider.currentUser?.uid;
     final roadmapId = roadmapProvider.currentRoadmap?.id;
 
-    if (userId == null || roadmapId == null) {
+    print('🔍 VERIFICANDO IDs EN EXERCISE_SCREEN:');
+    print('   Usuario UID: ${userId ?? "NULL"}');
+    print('   Roadmap ID: ${roadmapId ?? "NULL"}');
+    print('   Sección ID: ${widget.section.id}');
+    print('   Sección: ${widget.section.subtopic}');
+
+    //validar usuario
+    if (userId == null || userId.isEmpty) {
+      if (!mounted) return;
       CustomSnackbar.showError(
         context: context,
-        message: 'Error',
-        description: 'No se encontró información del usuario o roadmap',
+        message: 'Error de autenticación',
+        description: 'No se encontró el usuario autenticado',
       );
       Navigator.pop(context);
       return;
     }
+
+    //validar roadmap
+    if (roadmapId == null || roadmapId.isEmpty) {
+      if (!mounted) return;
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error de roadmap',
+        description: 'No se encontró el roadmap actual',
+      );
+      Navigator.pop(context);
+      return;
+    }
+
+    print('✅ Todos los IDs son válidos, generando ejercicios...');
 
     final success = await exerciseProvider.generateExercisesForSection(
       userId: userId,
@@ -134,6 +156,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       context,
       listen: false,
     );
+    final exerciseProvider = Provider.of<ExerciseProvider>(
+      context,
+      listen: false,
+    );
+
+    print('✅ Completando sección con theta: $newTheta');
 
     final success = await roadmapProvider.updateSectionCompletion(
       userId: authProvider.currentUser!.uid,
@@ -145,11 +173,16 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (!mounted) return;
 
     if (success) {
+      //limpiar el estado del provider antes de volver
+      exerciseProvider.reset();
+
       CustomSnackbar.showSuccess(
         context: context,
         message: '¡Sección completada!',
         description: 'Has avanzado en tu roadmap de aprendizaje.',
       );
+
+      //retornar true para indicar que se completo
       Navigator.pop(context, true);
     } else {
       CustomSnackbar.showError(
@@ -218,11 +251,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         return confirm ?? false;
       },
       child: Scaffold(
-        appBar: CustomAppBar(
-          title: widget.section.subtopic,
-          isIcon: false,
-          customIcon: Icons.close,
-          onCustomIconTap: () async {
+        appBar: RoadmapAppBar(
+          topic: widget.section.bloomLevel,
+          level: widget.section.subtopic,
+          lives: 3,
+          onClose: () async {
             final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => MinimalConfirmDialog(

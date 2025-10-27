@@ -550,34 +550,53 @@ class UserService {
   }
 
   //guarda los ejercicios de una seccion especifica en un roadmap
-  Future<bool> saveSectionExercises({
-    required String uid,
-    required String roadmapId,
-    required String sectionId,
-    required List<Exercise> exercises,
-  }) async {
-    try {
-      final exercisesData = exercises.map((e) => e.toJson()).toList();
-
-      await _firestore
-          .collection('users')
-          .doc(uid)
-          .collection('roadmaps')
-          .doc(roadmapId)
-          .collection('exercises')
-          .doc(sectionId)
-          .set({
-            'sectionId': sectionId,
-            'exercises': exercisesData,
-            'createdAt': FieldValue.serverTimestamp(),
-          });
-
-      return true;
-    } catch (e) {
-      print('ERROR :: $e');
+Future<bool> saveSectionExercises({
+  required String uid,
+  required String roadmapId,
+  required String sectionId,
+  required List<Exercise> exercises,
+}) async {
+  try {
+    //valida que los parametros no esten vacios
+    if (uid.isEmpty || roadmapId.isEmpty || sectionId.isEmpty) {
+      print('❌ Parámetros vacíos en saveSectionExercises');
+      print('   uid: "${uid.isEmpty ? "VACÍO" : uid}"');
+      print('   roadmapId: "${roadmapId.isEmpty ? "VACÍO" : roadmapId}"');
+      print('   sectionId: "${sectionId.isEmpty ? "VACÍO" : sectionId}"');
       return false;
     }
+
+    if (exercises.isEmpty) {
+      print('⚠️ Lista de ejercicios vacía');
+      return false;
+    }
+
+    print('💾 Guardando ${exercises.length} ejercicios en Firestore...');
+    print('   Path: users/$uid/roadmaps/$roadmapId/exercises/$sectionId');
+
+    final exercisesData = exercises.map((e) => e.toJson()).toList();
+
+    await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('roadmaps')
+        .doc(roadmapId)
+        .collection('exercises')
+        .doc(sectionId)
+        .set({
+          'sectionId': sectionId,
+          'exercises': exercisesData,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+    print('✅ Ejercicios guardados exitosamente en Firestore');
+    return true;
+  } catch (e) {
+    print('❌ ERROR CRÍTICO en saveSectionExercises: $e');
+    print('   Stack trace: ${StackTrace.current}');
+    return false;
   }
+}
 
   //actualiza una seccion especifica en un roadmap
   Future<bool> updateRoadmapSection({
