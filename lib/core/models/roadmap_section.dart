@@ -93,16 +93,12 @@ class Roadmap {
 
   factory Roadmap.fromJson(Map<String, dynamic> json) {
     final sectionsData = json['sections'] as List<dynamic>? ?? [];
-    final sections = sectionsData
-        .asMap()
-        .entries
-        .map(
-          (entry) => RoadmapSection.fromJson(
-            entry.value as Map<String, dynamic>,
-            entry.key,
-          ),
-        )
-        .toList();
+    final sections = sectionsData.asMap().entries.map((entry) {
+      return RoadmapSection.fromJson(
+        entry.value as Map<String, dynamic>,
+        entry.key,
+      );
+    }).toList();
 
     return Roadmap(
       id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
