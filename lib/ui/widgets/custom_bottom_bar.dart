@@ -37,9 +37,9 @@ class CustomBottomNavBar extends StatelessWidget {
                 index: 0,
               ),
               _buildNavItem(
-                icon: Icons.school_outlined,
-                activeIcon: Icons.school,
-                label: "Cursos",
+                icon: Icons.map_outlined,
+                activeIcon: Icons.map,
+                label: "Mis Roadmaps",
                 index: 1,
               ),
               _buildNavItem(
@@ -47,12 +47,6 @@ class CustomBottomNavBar extends StatelessWidget {
                 activeIcon: Icons.forum,
                 label: "Foro",
                 index: 2,
-              ),
-              _buildNavItem(
-                icon: Icons.settings_outlined,
-                activeIcon: Icons.settings,
-                label: "Ajustes",
-                index: 3,
               ),
             ],
           ),
@@ -77,9 +71,7 @@ class CustomBottomNavBar extends StatelessWidget {
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive
-              ? AppColors.surface
-              : Colors.transparent,
+          color: isActive ? AppColors.surface : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -91,7 +83,9 @@ class CustomBottomNavBar extends StatelessWidget {
               curve: Curves.easeOutBack,
               child: Icon(
                 isActive ? activeIcon : icon,
-                color: isActive ? AppColors.backgroundButtom : AppColors.textLight,
+                color: isActive
+                    ? AppColors.backgroundButtom
+                    : AppColors.textLight,
                 size: 28,
               ),
             ),
