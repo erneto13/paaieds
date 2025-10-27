@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:paaieds/ui/screens/forum/forum_screen.dart';
 import 'package:paaieds/ui/screens/home/learn_test.dart';
 import 'package:paaieds/ui/screens/main_app/roadmap/roadmap_list_screen.dart';
-import 'package:paaieds/ui/screens/settings/settings_screen.dart';
 
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
@@ -27,7 +26,6 @@ class _MainNavigationState extends State<MainNavigation> {
         currentIndex: _selectedIndex,
       ),
       ForumScreen(onNavBarTap: _onNavBarTap, currentIndex: _selectedIndex),
-      SettingsScreen(onNavBarTap: _onNavBarTap, currentIndex: _selectedIndex),
     ];
 
     return screens[_selectedIndex];
