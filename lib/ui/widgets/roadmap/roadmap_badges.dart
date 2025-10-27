@@ -13,10 +13,11 @@ class RoadmapBadges extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
       children: [
         _buildBadge(label: level, color: _getLevelColor(), icon: Icons.star),
-        const SizedBox(width: 8),
         _buildBadge(
           label: '$totalSections secciones',
           color: AppColors.oceanBlue,

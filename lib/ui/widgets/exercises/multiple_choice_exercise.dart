@@ -23,7 +23,7 @@ class _MultipleChoiceExerciseState extends State<MultipleChoiceExercise> {
 
   @override
   Widget build(BuildContext context) {
-    final opciones = widget.exercise.data['opciones'] as List<dynamic>? ?? [];
+    final opciones = widget.exercise.data['options'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

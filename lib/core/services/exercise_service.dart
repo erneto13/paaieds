@@ -101,7 +101,7 @@ ${objectives.map((o) => '- $o').join('\n')}
       "difficulty": 0.7
     },
     {
-      "type": "codigo",
+      "type": "code",
       "statement": "Descripción del código a escribir",
       "initialCode": "// Código de inicio (opcional)",
       "correctCode": "código de solución",
