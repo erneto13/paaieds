@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:animate_do/animate_do.dart';
-import 'package:paaieds/core/models/roadmap_section.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/ui/widgets/roadmap_custom_app_bar.dart';
-import 'package:paaieds/ui/widgets/roadmap_section_card.dart';
+import 'package:paaieds/ui/widgets/roadmap_path.dart';
 import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 
@@ -34,29 +32,17 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
           backgroundColor: Colors.white,
           body: SafeArea(
             child: Column(
-              children: [Expanded(child: _buildSectionsList(roadmap.sections))],
+              children: [
+                Expanded(
+                  child: RoadmapPath(
+                    sections: roadmap.sections,
+                    onTap: (section) {
+                      debugPrint('Section tapped: ${section.subtopic}');
+                    },
+                  ),
+                ),
+              ],
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSectionsList(List<RoadmapSection> sections) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: sections.length,
-      itemBuilder: (context, index) {
-        final section = sections[index];
-        return FadeInUp(
-          duration: Duration(milliseconds: 400 + (index * 100)),
-          child: RoadmapSectionCard(
-            section: section,
-            isLocked: index > 0 && !sections[index - 1].completed,
-            onTap: () {
-              // TODO: Navigate to exercises for this section
-              debugPrint('Section tapped: ${section.subtopic}');
-            },
           ),
         );
       },
