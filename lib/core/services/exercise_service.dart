@@ -26,7 +26,7 @@ class ExerciseService {
       final result = await _geminiService.generateText(prompt);
       final jsonData = JsonParserUtil.parseJsonObject(result);
 
-      final ejerciciosData = jsonData['ejercicios'] as List<dynamic>? ?? [];
+      final ejerciciosData = jsonData['exercises'] as List<dynamic>? ?? [];
 
       return ejerciciosData
           .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
@@ -76,12 +76,11 @@ Objetivos de aprendizaje:
 ${objectives.map((o) => '- $o').join('\n')}
 
 **Tipos de ejercicios a incluir**:
-1. **seleccion_multiple**: Preguntas con 4 opciones, una correcta.
-2. **bloques**: Ordenar elementos (código, conceptos, pasos) en el orden correcto.
-3. **codigo**: Completar o escribir código según el enunciado.
+1. **multiple_choice**: Preguntas con 4 opciones, una correcta.
+2. **block_order**: Ordenar elementos (código, conceptos, pasos) en el orden correcto.
+3. **code**: Completar o escribir código según el enunciado. Si el $subtopic
 
 **Estructura JSON esperada**:
-```json
 {
   "subtopic": "$subtopic",
   "exercises": [
@@ -112,7 +111,6 @@ ${objectives.map((o) => '- $o').join('\n')}
     }
   ]
 }
-```
 
 **Requisitos**:
 - Varía los tipos de ejercicios
@@ -121,7 +119,7 @@ ${objectives.map((o) => '- $o').join('\n')}
 - Asegúrate de que los ejercicios sean claros y verificables
 - Devuelve SOLO el JSON, sin texto adicional
 
-Genera los ejercicios ahora:
+Genera los ejercicios ahora. No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
 ''';
   }
 

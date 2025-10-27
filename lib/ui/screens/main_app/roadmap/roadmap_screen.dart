@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
+import 'package:paaieds/ui/screens/main_app/exercises/exercise_screen.dart';
 import 'package:paaieds/ui/widgets/roadmap/roadmap_custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/roadmap/roadmap_path.dart';
 import 'package:paaieds/util/string_formatter.dart';
@@ -37,7 +38,15 @@ class _RoadmapScreenState extends State<RoadmapScreen> {
                   child: RoadmapPath(
                     sections: roadmap.sections,
                     onTap: (section) {
-                      debugPrint('Section tapped: ${section.subtopic}');
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ExerciseScreen(
+                            currentTheta: roadmap.initialTheta,
+                            section: section,
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ),
