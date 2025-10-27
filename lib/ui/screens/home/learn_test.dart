@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
-import 'package:paaieds/ui/screens/main_app/test_screen.dart';
+import 'package:paaieds/ui/screens/main_app/etests/test_screen.dart';
 import 'package:paaieds/ui/widgets/test_history_section.dart';
 import 'package:paaieds/ui/widgets/test_preview_card.dart';
 import 'package:provider/provider.dart';
