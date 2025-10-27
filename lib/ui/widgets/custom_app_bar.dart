@@ -66,7 +66,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           ),
                         )
                       : Icon(
-                          customIcon ?? Icons.notifications_none,
+                          customIcon ?? Icons.settings_outlined,
                           size: 26,
                           color: Colors.grey[700],
                         ),

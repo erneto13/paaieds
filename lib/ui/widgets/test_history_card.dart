@@ -1,10 +1,13 @@
-// lib/ui/widgets/test_history_card.dart
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/test_results.dart';
+import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:paaieds/core/providers/history_provider.dart';
+import 'package:paaieds/ui/widgets/confirm_dialog.dart';
+import 'package:paaieds/util/string_formatter.dart';
+import 'package:provider/provider.dart';
 
 class TestHistoryCard extends StatelessWidget {
   final TestResult result;
@@ -22,10 +25,10 @@ class TestHistoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: _getLevelColor().withOpacity(0.3)),
+          border: Border.all(color: _getLevelColor().withValues(alpha: 0.3)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -38,7 +41,7 @@ class TestHistoryCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    result.topic,
+                    result.topic.toTitleCase(),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -46,6 +49,7 @@ class TestHistoryCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                _buildDeleteButton(context),
                 _buildLevelBadge(),
               ],
             ),
@@ -76,11 +80,61 @@ class TestHistoryCard extends StatelessWidget {
     );
   }
 
+  Widget _buildDeleteButton(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.delete_outline),
+      color: Colors.red,
+      iconSize: 22,
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (ctx) => MinimalConfirmDialog(
+            title: 'Eliminar diagnóstico',
+            content:
+                'También se eliminará el roadmap asociado. ¿Deseas continuar?',
+            onConfirm: () async {
+              Navigator.of(ctx).pop();
+
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              );
+              final historyProvider = Provider.of<HistoryProvider>(
+                context,
+                listen: false,
+              );
+
+              final success = await historyProvider.deleteTestResult(
+                userId: authProvider.currentUser!.uid,
+                testId: result.id,
+                topic: result.topic,
+              );
+
+              if (success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Diagnóstico y roadmap eliminados'),
+                  ),
+                );
+              } else if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Error al eliminar diagnóstico'),
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildLevelBadge() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: _getLevelColor().withOpacity(0.1),
+        color: _getLevelColor().withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(

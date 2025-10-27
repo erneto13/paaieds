@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
+import 'package:paaieds/ui/screens/main_app/roadmap/roadmap_screen.dart';
+import 'package:paaieds/ui/widgets/snackbar.dart';
+import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/ui/screens/main_app/test_result.dart';
+import 'package:paaieds/ui/screens/main_app/etests/test_result.dart';
 import 'package:paaieds/ui/widgets/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/question_card.dart';
@@ -39,20 +44,67 @@ class TestScreen extends StatelessWidget {
             topic: testProvider.currentTopic ?? 'Test',
             evaluationResults: testProvider.evaluationResults!,
             onGenerateRoadmap: () async {
-              //aqui generaras el roadmap con la ia
-              debugPrint("Generando roadmap...");
+              final roadmapProvider = Provider.of<RoadmapProvider>(
+                context,
+                listen: false,
+              );
+              final authProvider = Provider.of<AuthProvider>(
+                context,
+                listen: false,
+              );
+
+              final userId = authProvider.currentUser?.uid;
+              if (userId == null) {
+                CustomSnackbar.showError(
+                  context: context,
+                  message: 'Usuario no autenticado',
+                  description: 'Por favor, inicia sesión nuevamente.',
+                );
+                return;
+              }
+
+              CustomSnackbar.showInfo(
+                context: context,
+                message: 'Generando tu roadmap personalizado...',
+                description:
+                    'Estamos creando un roadmap adaptado a tus necesidades, espera un momento....',
+                duration: const Duration(seconds: 10),
+              );
+
+              final success = await roadmapProvider.generateRoadmap(
+                userId: userId,
+                topic: testProvider.currentTopic!,
+                level: testProvider.evaluationResults!['level'],
+                theta: testProvider.evaluationResults!['theta'],
+                percentage: testProvider.evaluationResults!['percentage'],
+              );
+
+              if (!context.mounted) return;
+
+              if (success) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RoadmapScreen()),
+                );
+              } else {
+                CustomSnackbar.showError(
+                  context: context,
+                  message: 'Error al generar el roadmap',
+                  description:
+                      roadmapProvider.errorMessage ??
+                      'Inténtalo de nuevo más tarde.',
+                );
+              }
             },
           ),
         ),
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            testProvider.errorMessage ?? 'Error al evaluar el test',
-          ),
-          backgroundColor: Colors.red,
-        ),
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error al evaluar el test',
+        description:
+            testProvider.errorMessage ?? 'Inténtalo de nuevo más tarde.',
       );
     }
   }
@@ -63,7 +115,8 @@ class TestScreen extends StatelessWidget {
       builder: (context, testProvider, child) {
         return Scaffold(
           appBar: CustomAppBar(
-            title: testProvider.currentTopic ?? "Test",
+            title:
+                'Test: ${testProvider.currentTopic?.toTitleCase() ?? "Test"}',
             isIcon: false,
             customIcon: Icons.close,
             onCustomIconTap: () async {
@@ -133,9 +186,8 @@ class TestScreen extends StatelessWidget {
                                   const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: Colors.white,
+                                    child: SpinKitCircle(
+                                      color: AppColors.primary,
                                     ),
                                   ),
                                   const SizedBox(width: 12),

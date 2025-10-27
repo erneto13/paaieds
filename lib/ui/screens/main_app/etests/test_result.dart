@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:paaieds/ui/widgets/confirm_dialog.dart';
+import 'package:paaieds/ui/widgets/custom_app_bar.dart';
+import 'package:paaieds/util/string_formatter.dart';
 
-class TestResultsScreen extends StatelessWidget {
+class TestResultsScreen extends StatefulWidget {
   final String topic;
   final Map<String, dynamic> evaluationResults;
   final VoidCallback onGenerateRoadmap;
@@ -14,88 +18,140 @@ class TestResultsScreen extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final level = evaluationResults['level'] as String;
-    final percentage = evaluationResults['percentage'] as double;
-    final correct = evaluationResults['correctAnswers'] as int;
-    final total = evaluationResults['totalQuestions'] as int;
+  State<TestResultsScreen> createState() => _TestResultsScreenState();
+}
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.black87),
-          onPressed: () => Navigator.of(context).pop(),
+class _TestResultsScreenState extends State<TestResultsScreen> {
+  bool _isLoading = false;
+
+  Future<void> _handleGenerateRoadmap() async {
+    setState(() => _isLoading = true);
+    try {
+      await Future.delayed(const Duration(milliseconds: 600));
+      widget.onGenerateRoadmap();
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final level = widget.evaluationResults['level'] as String;
+    final percentage = widget.evaluationResults['percentage'] as double;
+    final correct = widget.evaluationResults['correctAnswers'] as int;
+    final total = widget.evaluationResults['totalQuestions'] as int;
+
+    return Stack(
+      children: [
+        Scaffold(
+          backgroundColor: Colors.white,
+          appBar: CustomAppBar(
+            title: '¡Diagnóstico completado!',
+            isIcon: false,
+            customIcon: Icons.close,
+            onCustomIconTap: _isLoading
+                ? null
+                : () async {
+                    await showDialog(
+                      context: context,
+                      barrierColor: Colors.black26,
+                      builder: (context) => MinimalConfirmDialog(
+                        title: 'Salir del diagnóstico',
+                        content:
+                            '¿Seguro que quieres salir? Tu roadmap no se guardará.',
+                        onConfirm: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                    );
+                  },
+          ),
+          body: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          FadeInDown(
+                            duration: const Duration(milliseconds: 400),
+                            child: _buildSuccessIcon(),
+                          ),
+                          const SizedBox(height: 24),
+                          FadeInDown(
+                            duration: const Duration(milliseconds: 500),
+                            child: Text(
+                              '¡Diagnóstico Completado!',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueAccent,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          FadeInDown(
+                            duration: const Duration(milliseconds: 600),
+                            child: Text(
+                              widget.topic.toTitleCase(),
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.grey[700],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 40),
+                          FadeInUp(
+                            duration: const Duration(milliseconds: 700),
+                            child: _buildLevelCard(level, percentage),
+                          ),
+                          const SizedBox(height: 24),
+                          FadeInUp(
+                            duration: const Duration(milliseconds: 800),
+                            child: _buildStatsCard(correct, total),
+                          ),
+                          const SizedBox(height: 24),
+                          FadeInUp(
+                            duration: const Duration(milliseconds: 900),
+                            child: _buildRecommendationCard(level),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FadeInUp(
+                    duration: const Duration(milliseconds: 1000),
+                    child: _buildGenerateButton(),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Expanded(
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      FadeInDown(
-                        duration: const Duration(milliseconds: 400),
-                        child: _buildSuccessIcon(),
-                      ),
-                      const SizedBox(height: 24),
-                      FadeInDown(
-                        duration: const Duration(milliseconds: 500),
-                        child: Text(
-                          '¡Diagnóstico Completado!',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      FadeInDown(
-                        duration: const Duration(milliseconds: 600),
-                        child: Text(
-                          topic,
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[700],
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                      const SizedBox(height: 40),
-                      FadeInUp(
-                        duration: const Duration(milliseconds: 700),
-                        child: _buildLevelCard(level, percentage),
-                      ),
-                      const SizedBox(height: 24),
-                      FadeInUp(
-                        duration: const Duration(milliseconds: 800),
-                        child: _buildStatsCard(correct, total),
-                      ),
-                      const SizedBox(height: 24),
-                      FadeInUp(
-                        duration: const Duration(milliseconds: 900),
-                        child: _buildRecommendationCard(level),
-                      ),
-                    ],
+
+        if (_isLoading)
+          Positioned.fill(
+            child: Container(
+              color: Colors.black.withValues(alpha: 0.4),
+              child: Center(
+                child: FadeIn(
+                  duration: const Duration(milliseconds: 300),
+                  child: const SpinKitRing(
+                    color: Colors.white,
+                    size: 70,
+                    lineWidth: 6,
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
-              FadeInUp(
-                duration: const Duration(milliseconds: 1000),
-                child: _buildGenerateButton(context),
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+      ],
     );
   }
 
@@ -157,7 +213,7 @@ class TestResultsScreen extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Nivel: $level',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               color: Colors.white,
@@ -218,7 +274,7 @@ class TestResultsScreen extends StatelessWidget {
         const SizedBox(height: 8),
         Text(
           value,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
             color: Colors.black87,
@@ -281,12 +337,12 @@ class TestResultsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildGenerateButton(BuildContext context) {
+  Widget _buildGenerateButton() {
     return SizedBox(
       width: double.infinity,
       height: 54,
       child: ElevatedButton.icon(
-        onPressed: onGenerateRoadmap,
+        onPressed: _isLoading ? null : _handleGenerateRoadmap,
         style: ElevatedButton.styleFrom(
           backgroundColor: Colors.blueAccent,
           elevation: 4,
@@ -296,7 +352,7 @@ class TestResultsScreen extends StatelessWidget {
           ),
         ),
         icon: const Icon(Icons.map, color: Colors.white),
-        label: Text(
+        label: const Text(
           'Generar Mi Roadmap',
           style: TextStyle(
             color: Colors.white,

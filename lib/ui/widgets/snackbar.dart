@@ -56,6 +56,7 @@ class CustomSnackbar {
     required BuildContext context,
     required String message,
     String? description,
+    Duration? duration,
   }) {
     show(
       context: context,
