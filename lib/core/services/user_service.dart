@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:paaieds/core/models/roadmap_section.dart';
 import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/models/user.dart';
 
@@ -9,6 +10,10 @@ class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  /*
+  USUARIO
+  */
 
   //obtener el usuario actual
   Future<UserModel?> getCurrentUser() async {
@@ -25,7 +30,6 @@ class UserService {
 
       return UserModel.fromFirestore(doc);
     } catch (e) {
-      print('Error al obtener usuario: $e');
       return null;
     }
   }
@@ -80,7 +84,6 @@ class UserService {
       final updatedDoc = await _firestore.collection('users').doc(uid).get();
       return UserModel.fromFirestore(updatedDoc);
     } catch (e) {
-      print('Error al actualizar perfil: $e');
       rethrow;
     }
   }
@@ -104,7 +107,6 @@ class UserService {
       final downloadUrl = await uploadTask.ref.getDownloadURL();
       return downloadUrl;
     } catch (e) {
-      print('Error al subir imagen: $e');
       return null;
     }
   }
@@ -123,7 +125,6 @@ class UserService {
 
       return true;
     } catch (e) {
-      print('Error al eliminar imagen: $e');
       return false;
     }
   }
@@ -137,7 +138,6 @@ class UserService {
       final user = _auth.currentUser;
       if (user == null) return false;
 
-      // Reautenticar al usuario
       final credential = EmailAuthProvider.credential(
         email: user.email!,
         password: currentPassword,
@@ -145,15 +145,25 @@ class UserService {
 
       await user.reauthenticateWithCredential(credential);
 
-      // Cambiar contraseña
       await user.updatePassword(newPassword);
 
       return true;
     } catch (e) {
-      print('Error al cambiar contraseña: $e');
       return false;
     }
   }
+
+  //stream para escuchar cambios en el perfil del usuario
+  Stream<UserModel?> userStream(String uid) {
+    return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
+      if (!snapshot.exists) return null;
+      return UserModel.fromFirestore(snapshot);
+    });
+  }
+
+  /*
+  PRUEBAS DE CONOCIMIENTO
+  */
 
   //guarda un resultado de evaluación en el perfil del usuario
   Future<bool> saveAssessmentResult({
@@ -194,7 +204,6 @@ class UserService {
 
       return true;
     } catch (e) {
-      print('Error al guardar evaluación: $e');
       return false;
     }
   }
@@ -214,7 +223,6 @@ class UserService {
         return data;
       }).toList();
     } catch (e) {
-      print('Error al obtener evaluaciones: $e');
       return [];
     }
   }
@@ -233,36 +241,224 @@ class UserService {
         });
   }
 
-  //guarda un roadmap generado en el perfil del usuario
-  Future<bool> saveRoadmap({
+  //eliminar un resultado de evaluación específico
+  Future<bool> deleteAssessmentResult({
     required String uid,
-    required String topicName,
-    required Map<String, dynamic> roadmapData,
+    required String assessmentId,
   }) async {
     try {
-      final roadmap = {
-        'topic': topicName,
-        'level': roadmapData['level'],
-        'roadmapContent': roadmapData['content'],
-        'createdAt': FieldValue.serverTimestamp(),
-      };
-
-      await _firestore.collection('users').doc(uid).update({
-        'roadmaps': FieldValue.arrayUnion([roadmap]),
-      });
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('assessments')
+          .doc(assessmentId)
+          .delete();
 
       return true;
     } catch (e) {
-      print('Error al guardar roadmap: $e');
       return false;
     }
   }
 
-  //stream para escuchar cambios en el perfil del usuario
-  Stream<UserModel?> userStream(String uid) {
-    return _firestore.collection('users').doc(uid).snapshots().map((snapshot) {
-      if (!snapshot.exists) return null;
-      return UserModel.fromFirestore(snapshot);
-    });
+  /*
+  ROADMAPS
+  */
+
+  //guarda un roadmap para el usuario
+  Future<String?> saveRoadmap({
+    required String uid,
+    required Roadmap roadmap,
+  }) async {
+    try {
+      final roadmapData = {
+        'topic': roadmap.topic,
+        'level': roadmap.level,
+        'initialTheta': roadmap.initialTheta,
+        'sections': roadmap.sections.map((s) => s.toJson()).toList(),
+        'totalSections': roadmap.totalSections,
+        'completedSections': roadmap.completedSections,
+        'progressPercentage': roadmap.progressPercentage,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      final docRef = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .add(roadmapData);
+
+      return docRef.id;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  //actualiza un roadmap existente
+  Future<bool> updateRoadmap({
+    required String uid,
+    required String roadmapId,
+    required Roadmap roadmap,
+  }) async {
+    try {
+      final roadmapData = {
+        'sections': roadmap.sections.map((s) => s.toJson()).toList(),
+        'completedSections': roadmap.completedSections,
+        'progressPercentage': roadmap.progressPercentage,
+        'updatedAt': FieldValue.serverTimestamp(),
+      };
+
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .update(roadmapData);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //obtiene todos los roadmaps de un usuario
+  Future<List<Roadmap>> getUserRoadmaps(String uid) async {
+    try {
+      final querySnapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      return querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        data['id'] = doc.id;
+
+        // Convert Timestamp to DateTime string
+        if (data['createdAt'] != null) {
+          data['createdAt'] = (data['createdAt'] as Timestamp)
+              .toDate()
+              .toIso8601String();
+        }
+
+        return Roadmap.fromJson(data);
+      }).toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  //stream que escucha cambios en los roadmaps del usuario
+  Stream<List<Roadmap>> userRoadmapsStream(String uid) {
+    return _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('roadmaps')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            data['id'] = doc.id;
+
+            // Convert Timestamp to DateTime string
+            if (data['createdAt'] != null) {
+              data['createdAt'] = (data['createdAt'] as Timestamp)
+                  .toDate()
+                  .toIso8601String();
+            }
+
+            return Roadmap.fromJson(data);
+          }).toList();
+        });
+  }
+
+  //obtiene un roadmap especifico por id
+  Future<Roadmap?> getRoadmap({
+    required String uid,
+    required String roadmapId,
+  }) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .get();
+
+      if (!doc.exists) return null;
+
+      final data = doc.data()!;
+      data['id'] = doc.id;
+
+      // Convert Timestamp to DateTime string
+      if (data['createdAt'] != null) {
+        data['createdAt'] = (data['createdAt'] as Timestamp)
+            .toDate()
+            .toIso8601String();
+      }
+
+      return Roadmap.fromJson(data);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  //elimina un roadmap especifico
+  Future<bool> deleteRoadmap({
+    required String uid,
+    required String roadmapId,
+  }) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .delete();
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //actualiza una seccion especifica en un roadmap
+  Future<bool> updateRoadmapSection({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+    required bool completed,
+    double? finalTheta,
+  }) async {
+    try {
+      final roadmap = await getRoadmap(uid: uid, roadmapId: roadmapId);
+      if (roadmap == null) return false;
+
+      final updatedSections = roadmap.sections.map((section) {
+        if (section.id == sectionId) {
+          return section.copyWith(completed: completed, finalTheta: finalTheta);
+        }
+        return section;
+      }).toList();
+
+      final updatedRoadmap = Roadmap(
+        id: roadmap.id,
+        topic: roadmap.topic,
+        level: roadmap.level,
+        initialTheta: roadmap.initialTheta,
+        sections: updatedSections,
+        createdAt: roadmap.createdAt,
+      );
+
+      return await updateRoadmap(
+        uid: uid,
+        roadmapId: roadmapId,
+        roadmap: updatedRoadmap,
+      );
+    } catch (e) {
+      return false;
+    }
   }
 }

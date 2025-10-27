@@ -60,6 +60,46 @@ class HistoryProvider extends ChangeNotifier {
     }
   }
 
+  //eliminar un resultado del historial
+  Future<bool> deleteTestResult({
+    required String userId,
+    required String testId,
+    required String topic,
+  }) async {
+    try {
+      await _userService.deleteAssessmentResult(
+        uid: userId,
+        assessmentId: testId,
+      );
+
+      final roadmaps = await _userService.getUserRoadmaps(userId);
+      dynamic roadmapToDelete;
+      try {
+        roadmapToDelete = roadmaps.firstWhere(
+          (r) => r.topic.toLowerCase() == topic.toLowerCase(),
+        );
+      } catch (_) {
+        roadmapToDelete = null;
+      }
+
+      if (roadmapToDelete != null) {
+        await _userService.deleteRoadmap(
+          uid: userId,
+          roadmapId: roadmapToDelete.id,
+        );
+      }
+
+      _testHistory.removeWhere((t) => t.id == testId);
+      notifyListeners();
+
+      return true;
+    } catch (e) {
+      _errorMessage = 'Error al eliminar el resultado o su roadmap: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
   void clearError() {
     _errorMessage = null;
     notifyListeners();
