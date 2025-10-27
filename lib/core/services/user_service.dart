@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:paaieds/core/models/exercise.dart';
 import 'package:paaieds/core/models/roadmap_section.dart';
 import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/models/user.dart';
@@ -424,6 +425,160 @@ class UserService {
     }
   }
 
+  //guarda el progreso de una seccion en un roadmap
+  Future<bool> saveSectionProgress({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+    required SectionProgress progress,
+  }) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .collection('sectionProgress')
+          .doc(sectionId)
+          .set(progress.toJson());
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //obtiene el progreso de una seccion en un roadmap
+  Future<SectionProgress?> getSectionProgress({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+  }) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .collection('sectionProgress')
+          .doc(sectionId)
+          .get();
+
+      if (!doc.exists || doc.data() == null) {
+        print('No se encontró progreso guardado para sección: $sectionId');
+        return null;
+      }
+
+      final data = doc.data()!;
+
+      if (!data.containsKey('sectionId') || !data.containsKey('attempts')) {
+        print('Datos de progreso incompletos');
+        return null;
+      }
+
+      final attemptsData = data['attempts'] as List<dynamic>? ?? [];
+      final attempts = attemptsData.map((a) {
+        final attemptMap = a as Map<String, dynamic>;
+        return ExerciseAttempt(
+          exerciseId: attemptMap['exerciseId'] ?? '',
+          userAnswer: attemptMap['userAnswer'] ?? '',
+          isCorrect: attemptMap['isCorrect'] ?? false,
+          timestamp: DateTime.parse(attemptMap['timestamp']),
+        );
+      }).toList();
+
+      return SectionProgress(
+        sectionId: data['sectionId'] ?? sectionId,
+        currentTheta: (data['currentTheta'] ?? 0.0).toDouble(),
+        attempts: attempts,
+        correctCount: data['correctCount'] ?? 0,
+        totalAttempts: data['totalAttempts'] ?? 0,
+        isCompleted: data['isCompleted'] ?? false,
+      );
+    } catch (e) {
+      print('No se pudo obtener progreso (probablemente primera vez): $e');
+      return null;
+    }
+  }
+
+  //obtiene los ejercicios de una seccion especifica en un roadmap
+  Future<List<Exercise>?> getSectionExercises({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+  }) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .collection('exercises')
+          .doc(sectionId)
+          .get();
+
+      if (!doc.exists || doc.data() == null) {
+        print(
+          'No se encontraron ejercicios guardados para sección: $sectionId',
+        );
+        return null;
+      }
+
+      final data = doc.data()!;
+
+      if (!data.containsKey('exercises')) {
+        print('Documento existe pero no contiene ejercicios');
+        return null;
+      }
+
+      final exercisesData = data['exercises'] as List<dynamic>? ?? [];
+
+      if (exercisesData.isEmpty) {
+        print('La lista de ejercicios está vacía');
+        return null;
+      }
+
+      return exercisesData
+          .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print(
+        'No se pudieron obtener ejercicios (probablemente primera vez): $e',
+      );
+      return null;
+    }
+  }
+
+  //guarda los ejercicios de una seccion especifica en un roadmap
+  Future<bool> saveSectionExercises({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+    required List<Exercise> exercises,
+  }) async {
+    try {
+      final exercisesData = exercises.map((e) => e.toJson()).toList();
+
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .collection('exercises')
+          .doc(sectionId)
+          .set({
+            'sectionId': sectionId,
+            'exercises': exercisesData,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      return true;
+    } catch (e) {
+      print('ERROR :: $e');
+      return false;
+    }
+  }
+
   //actualiza una seccion especifica en un roadmap
   Future<bool> updateRoadmapSection({
     required String uid,
@@ -433,30 +588,53 @@ class UserService {
     double? finalTheta,
   }) async {
     try {
-      final roadmap = await getRoadmap(uid: uid, roadmapId: roadmapId);
-      if (roadmap == null) return false;
+      final roadmapDoc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .get();
 
-      final updatedSections = roadmap.sections.map((section) {
-        if (section.id == sectionId) {
-          return section.copyWith(completed: completed, finalTheta: finalTheta);
+      if (!roadmapDoc.exists) return false;
+
+      final roadmapData = roadmapDoc.data()!;
+      final sections = List<Map<String, dynamic>>.from(
+        roadmapData['sections'] ?? [],
+      );
+
+      bool sectionFound = false;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i]['id'] == sectionId) {
+          sections[i]['completed'] = completed;
+          if (finalTheta != null) {
+            sections[i]['finalTheta'] = finalTheta;
+          }
+          sectionFound = true;
+          break;
         }
-        return section;
-      }).toList();
+      }
 
-      final updatedRoadmap = Roadmap(
-        id: roadmap.id,
-        topic: roadmap.topic,
-        level: roadmap.level,
-        initialTheta: roadmap.initialTheta,
-        sections: updatedSections,
-        createdAt: roadmap.createdAt,
-      );
+      if (!sectionFound) return false;
 
-      return await updateRoadmap(
-        uid: uid,
-        roadmapId: roadmapId,
-        roadmap: updatedRoadmap,
-      );
+      final completedCount = sections
+          .where((s) => s['completed'] == true)
+          .length;
+      final totalSections = sections.length;
+      final progressPercentage = (completedCount / totalSections) * 100;
+
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .update({
+            'sections': sections,
+            'completedSections': completedCount,
+            'progressPercentage': progressPercentage,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      return true;
     } catch (e) {
       return false;
     }

@@ -45,7 +45,28 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       listen: false,
     );
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final roadmapProvider = Provider.of<RoadmapProvider>(
+      context,
+      listen: false,
+    );
+
+    final userId = authProvider.currentUser?.uid;
+    final roadmapId = roadmapProvider.currentRoadmap?.id;
+
+    if (userId == null || roadmapId == null) {
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error',
+        description: 'No se encontró información del usuario o roadmap',
+      );
+      Navigator.pop(context);
+      return;
+    }
+
     final success = await exerciseProvider.generateExercisesForSection(
+      userId: userId,
+      roadmapId: roadmapId,
       section: widget.section,
       currentTheta: widget.currentTheta,
     );

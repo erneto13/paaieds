@@ -3,9 +3,11 @@ import 'package:paaieds/core/algorithm/irt_service.dart';
 import 'package:paaieds/core/models/exercise.dart';
 import 'package:paaieds/core/models/roadmap_section.dart';
 import 'package:paaieds/core/services/exercise_service.dart';
+import 'package:paaieds/core/services/user_service.dart';
 
 class ExerciseProvider extends ChangeNotifier {
   final ExerciseService _exerciseService = ExerciseService();
+  final UserService _userService = UserService();
 
   List<Exercise> _exercises = [];
   SectionProgress? _currentProgress;
@@ -14,6 +16,9 @@ class ExerciseProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _showingResult = false;
   bool _isCorrectAnswer = false;
+
+  String? _currentUserId;
+  String? _currentRoadmapId;
 
   List<Exercise> get exercises => _exercises;
   SectionProgress? get currentProgress => _currentProgress;
@@ -34,35 +39,109 @@ class ExerciseProvider extends ChangeNotifier {
 
   //genera ejercicios para una sección dada
   Future<bool> generateExercisesForSection({
+    required String userId,
+    required String roadmapId,
     required RoadmapSection section,
     required double currentTheta,
   }) async {
     _isLoading = true;
     _errorMessage = null;
+    _currentUserId = userId;
+    _currentRoadmapId = roadmapId;
     notifyListeners();
 
     try {
-      _exercises = await _exerciseService.generateExercises(
-        subtopic: section.subtopic,
-        description: section.description,
-        currentTheta: currentTheta,
-        objectives: section.objectives,
-      );
+      print('VERIFICANDO EJERCICIOS GUARDADOS :: ${section.subtopic}');
 
-      _currentProgress = SectionProgress(
-        sectionId: section.id,
-        currentTheta: currentTheta,
-        attempts: [],
-        correctCount: 0,
-        totalAttempts: 0,
-      );
+      List<Exercise>? savedExercises;
+      SectionProgress? savedProgress;
 
-      _currentExerciseIndex = 0;
+      try {
+        savedExercises = await _userService.getSectionExercises(
+          uid: userId,
+          roadmapId: roadmapId,
+          sectionId: section.id,
+        );
+
+        savedProgress = await _userService.getSectionProgress(
+          uid: userId,
+          roadmapId: roadmapId,
+          sectionId: section.id,
+        );
+      } catch (e) {
+        print(' PRIMERA VEZ :: SE GENERARÁN EJERCICIOS NUEVOS');
+        savedExercises = null;
+        savedProgress = null;
+      }
+
+      if (savedExercises != null && savedExercises.isNotEmpty) {
+        _exercises = savedExercises;
+        _currentProgress =
+            savedProgress ??
+            SectionProgress(
+              sectionId: section.id,
+              currentTheta: currentTheta,
+              attempts: [],
+              correctCount: 0,
+              totalAttempts: 0,
+            );
+
+        _currentExerciseIndex =
+            _currentProgress!.totalAttempts < _exercises.length
+            ? _currentProgress!.totalAttempts
+            : 0;
+
+        print('CARGADOS ${_exercises.length} EJERCICIOS GUARDADOS');
+        print(
+          'Progreso: ${_currentProgress!.totalAttempts}/${_exercises.length}',
+        );
+      } else {
+        print('Generando nuevos ejercicios para: ${section.subtopic}');
+
+        _exercises = await _exerciseService.generateExercises(
+          subtopic: section.subtopic,
+          description: section.description,
+          currentTheta: currentTheta,
+          objectives: section.objectives,
+        );
+
+        if (_exercises.isEmpty) {
+          throw Exception('No se generaron ejercicios');
+        }
+
+        _currentProgress = SectionProgress(
+          sectionId: section.id,
+          currentTheta: currentTheta,
+          attempts: [],
+          correctCount: 0,
+          totalAttempts: 0,
+        );
+
+        _currentExerciseIndex = 0;
+
+        print('Guardando ${_exercises.length} ejercicios...');
+        final saved = await _userService.saveSectionExercises(
+          uid: userId,
+          roadmapId: roadmapId,
+          sectionId: section.id,
+          exercises: _exercises,
+        );
+
+        if (saved) {
+          print('Ejercicios guardados exitosamente');
+        } else {
+          print(
+            'No se pudieron guardar los ejercicios (pero se pueden usar)',
+          );
+        }
+      }
+
       _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = 'Error al generar ejercicios: $e';
+      print('$_errorMessage');
       _isLoading = false;
       notifyListeners();
       return false;
@@ -93,7 +172,29 @@ class ExerciseProvider extends ChangeNotifier {
 
     _isCorrectAnswer = isCorrect;
     _showingResult = true;
+
+    _saveProgress();
+
     notifyListeners();
+  }
+
+  Future<void> _saveProgress() async {
+    if (_currentUserId == null ||
+        _currentRoadmapId == null ||
+        _currentProgress == null) {
+      return;
+    }
+
+    try {
+      await _userService.saveSectionProgress(
+        uid: _currentUserId!,
+        roadmapId: _currentRoadmapId!,
+        sectionId: _currentProgress!.sectionId,
+        progress: _currentProgress!,
+      );
+    } catch (e) {
+      notifyListeners();
+    }
   }
 
   bool _checkAnswer(Exercise exercise, String userAnswer) {
@@ -115,7 +216,6 @@ class ExerciseProvider extends ChangeNotifier {
     }
   }
 
-  //avanza al siguiente ejercicio
   void nextExercise() {
     if (hasMoreExercises) {
       _currentExerciseIndex++;
@@ -125,7 +225,6 @@ class ExerciseProvider extends ChangeNotifier {
     }
   }
 
-  //calcula el nuevo theta basado en los intentos realizados
   Map<String, dynamic> calculateNewTheta() {
     if (_currentProgress == null) {
       return {'theta': 0.0, 'improved': false};
@@ -153,7 +252,6 @@ class ExerciseProvider extends ChangeNotifier {
     };
   }
 
-  //genera ejercicios de refuerzo para los conceptos fallidos
   Future<bool> generateReinforcementExercises({
     required RoadmapSection section,
     required List<String> failedConcepts,
@@ -184,7 +282,6 @@ class ExerciseProvider extends ChangeNotifier {
     }
   }
 
-  //completa la sección actual
   SectionProgress? completeSection() {
     if (_currentProgress == null) return null;
 
@@ -197,6 +294,15 @@ class ExerciseProvider extends ChangeNotifier {
       isCompleted: true,
     );
 
+    if (_currentUserId != null && _currentRoadmapId != null) {
+      _userService.saveSectionProgress(
+        uid: _currentUserId!,
+        roadmapId: _currentRoadmapId!,
+        sectionId: finalProgress.sectionId,
+        progress: finalProgress,
+      );
+    }
+
     return finalProgress;
   }
 
@@ -207,6 +313,8 @@ class ExerciseProvider extends ChangeNotifier {
     _errorMessage = null;
     _showingResult = false;
     _isCorrectAnswer = false;
+    _currentUserId = null;
+    _currentRoadmapId = null;
     notifyListeners();
   }
 

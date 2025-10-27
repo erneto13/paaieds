@@ -178,6 +178,7 @@ Traducción realizada con la versión gratuita del traductor DeepL.com
     }
   }
 
+  //actualiza el estado de finalización de una sección del roadmap
   Future<bool> updateSectionCompletion({
     required String userId,
     required String sectionId,
@@ -187,6 +188,16 @@ Traducción realizada con la versión gratuita del traductor DeepL.com
     if (_currentRoadmap == null) return false;
 
     try {
+      final success = await _userService.updateRoadmapSection(
+        uid: userId,
+        roadmapId: _currentRoadmap!.id,
+        sectionId: sectionId,
+        completed: completed,
+        finalTheta: finalTheta,
+      );
+
+      if (!success) return false;
+
       final updatedSections = _currentRoadmap!.sections.map((section) {
         if (section.id == sectionId) {
           return section.copyWith(completed: completed, finalTheta: finalTheta);
@@ -204,14 +215,7 @@ Traducción realizada con la versión gratuita del traductor DeepL.com
       );
 
       notifyListeners();
-
-      final success = await _userService.updateRoadmap(
-        uid: userId,
-        roadmapId: _currentRoadmap!.id,
-        roadmap: _currentRoadmap!,
-      );
-
-      return success;
+      return true;
     } catch (e) {
       _errorMessage = 'Error updating section: $e';
       notifyListeners();
