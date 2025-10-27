@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
-import 'package:paaieds/ui/widgets/test_details_modal.dart';
-import 'package:paaieds/ui/widgets/test_history_card.dart';
+import 'package:paaieds/ui/widgets/test/test_details_modal.dart';
+import 'package:paaieds/ui/widgets/test/test_history_card.dart';
 import 'package:provider/provider.dart';
 
 class TestHistorySection extends StatelessWidget {

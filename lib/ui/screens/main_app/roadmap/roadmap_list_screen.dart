@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:paaieds/ui/widgets/confirm_dialog.dart';
-import 'package:paaieds/ui/widgets/roadmap_card.dart';
-import 'package:paaieds/ui/widgets/snackbar.dart';
+import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_card.dart';
+import 'package:paaieds/ui/widgets/util/snackbar.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/ui/screens/main_app/roadmap/roadmap_screen.dart';
-import 'package:paaieds/ui/widgets/custom_app_bar.dart';
-import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
-import 'package:paaieds/ui/widgets/empty_state.dart';
+import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/util/custom_bottom_bar.dart';
+import 'package:paaieds/ui/widgets/util/empty_state.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:paaieds/config/app_colors.dart';
 

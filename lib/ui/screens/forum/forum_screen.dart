@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:paaieds/ui/widgets/custom_app_bar.dart';
-import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
-import 'package:paaieds/ui/widgets/empty_state.dart';
+import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/util/custom_bottom_bar.dart';
+import 'package:paaieds/ui/widgets/util/empty_state.dart';
 
 class ForumScreen extends StatelessWidget {
   final Function(int) onNavBarTap;

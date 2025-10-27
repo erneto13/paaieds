@@ -4,9 +4,9 @@ import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/ui/screens/auth/register_screen.dart';
-import 'package:paaieds/ui/widgets/custom_text_field.dart';
-import 'package:paaieds/ui/widgets/primary_button.dart';
-import 'package:paaieds/ui/widgets/snackbar.dart';
+import 'package:paaieds/ui/widgets/util/custom_text_field.dart';
+import 'package:paaieds/ui/widgets/util/primary_button.dart';
+import 'package:paaieds/ui/widgets/util/snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

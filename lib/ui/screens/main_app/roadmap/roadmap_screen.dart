@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
-import 'package:paaieds/ui/widgets/roadmap_custom_app_bar.dart';
-import 'package:paaieds/ui/widgets/roadmap_path.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_path.dart';
 import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 

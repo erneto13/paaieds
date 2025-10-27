@@ -4,9 +4,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/ui/widgets/custom_app_bar.dart';
-import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
-import 'package:paaieds/ui/widgets/custom_text_field.dart';
+import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/util/custom_bottom_bar.dart';
+import 'package:paaieds/ui/widgets/util/custom_text_field.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class SettingsScreen extends StatefulWidget {

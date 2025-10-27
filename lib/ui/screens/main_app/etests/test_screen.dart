@@ -4,14 +4,14 @@ import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
 import 'package:paaieds/ui/screens/main_app/roadmap/roadmap_screen.dart';
-import 'package:paaieds/ui/widgets/snackbar.dart';
+import 'package:paaieds/ui/widgets/util/snackbar.dart';
 import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/ui/screens/main_app/etests/test_result.dart';
-import 'package:paaieds/ui/widgets/confirm_dialog.dart';
-import 'package:paaieds/ui/widgets/custom_app_bar.dart';
-import 'package:paaieds/ui/widgets/question_card.dart';
+import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
+import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/util/question_card.dart';
 
 class TestScreen extends StatelessWidget {
   const TestScreen({super.key});

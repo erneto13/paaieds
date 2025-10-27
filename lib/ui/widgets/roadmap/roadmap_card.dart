@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:paaieds/core/models/roadmap_section.dart';
 import 'package:intl/intl.dart';
-import 'package:paaieds/ui/widgets/roadmap_badges.dart';
-import 'package:paaieds/ui/widgets/roadmap_progress.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_badges.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_progress.dart';
 import 'package:paaieds/util/string_formatter.dart';
 
 class RoadmapCard extends StatelessWidget {

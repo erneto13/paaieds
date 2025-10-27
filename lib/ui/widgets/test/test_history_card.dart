@@ -5,7 +5,7 @@ import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
-import 'package:paaieds/ui/widgets/confirm_dialog.dart';
+import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 

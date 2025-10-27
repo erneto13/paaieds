@@ -4,14 +4,14 @@ import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
 import 'package:paaieds/ui/screens/main_app/etests/test_screen.dart';
-import 'package:paaieds/ui/widgets/test_history_section.dart';
-import 'package:paaieds/ui/widgets/test_preview_card.dart';
+import 'package:paaieds/ui/widgets/test/test_history_section.dart';
+import 'package:paaieds/ui/widgets/test/test_preview_card.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
-import 'package:paaieds/ui/widgets/custom_bottom_bar.dart';
-import 'package:paaieds/ui/widgets/gradient_text.dart';
-import 'package:paaieds/ui/widgets/snackbar.dart';
-import '../../widgets/custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/util/custom_bottom_bar.dart';
+import 'package:paaieds/ui/widgets/util/gradient_text.dart';
+import 'package:paaieds/ui/widgets/util/snackbar.dart';
+import '../../widgets/util/custom_app_bar.dart';
 
 class LearnTestScreen extends StatefulWidget {
   final Function(int)? onNavBarTap;

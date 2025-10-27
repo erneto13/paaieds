@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
-import 'package:paaieds/ui/widgets/confirm_dialog.dart';
-import 'package:paaieds/ui/widgets/custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
+import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
 import 'package:paaieds/util/string_formatter.dart';
 
 class TestResultsScreen extends StatefulWidget {
