@@ -60,14 +60,16 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final userModel = await _authService.registerWithEmail(
+      await _authService.registerWithEmail(
         email: email,
         password: password,
         firstName: firstName,
         lastName: lastName,
       );
 
-      _currentUser = userModel;
+      await _authService.signOut();
+      
+      _currentUser = null;
       _isLoading = false;
       notifyListeners();
       return true;

@@ -93,18 +93,25 @@ class _RegisterScreenState extends State<RegisterScreen>
       lastName: lastName,
     );
 
-    if (!mounted) return;
+    if (!context.mounted) return;
 
     if (success) {
       CustomSnackbar.showSuccess(
-        // ignore: use_build_context_synchronously
         context: context,
-        message: 'Cuenta creada',
-        description: 'Inicia sesión para usar tu cuenta.',
+        message: 'Cuenta creada exitosamente',
+        description: 'Ahora puedes iniciar sesión con tu cuenta.',
+      );
+
+      await Future.delayed(const Duration(seconds: 1));
+
+      if (!context.mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
       );
     } else {
       CustomSnackbar.showError(
-        // ignore: use_build_context_synchronously
         context: context,
         message: 'Error al registrar',
         description: authProvider.errorMessage ?? 'Intenta más tarde.',
@@ -127,11 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen>
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOut,
-              padding: EdgeInsets.only(
-                top: 40,
-                left: 32,
-                right: 32,
-              ),
+              padding: EdgeInsets.only(top: 40, left: 32, right: 32),
               child: SingleChildScrollView(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
