@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:paaieds/core/models/forum_post.dart';
+import 'package:paaieds/core/models/forum_reply.dart';
 import 'package:paaieds/core/services/forum_service.dart';
 
 class ForumProvider extends ChangeNotifier {

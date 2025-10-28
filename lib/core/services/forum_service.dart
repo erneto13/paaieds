@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:paaieds/core/models/forum_post.dart';
+import 'package:paaieds/core/models/forum_reply.dart';
 
 class ForumService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
