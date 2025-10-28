@@ -18,7 +18,7 @@ class ForumScreen extends StatelessWidget {
     return Scaffold(
       // ignore: avoid_print
       appBar: CustomAppBar(title: "Foro", onCustomIconTap: () => print('test')),
-      backgroundColor: Colors.white10,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: Column(
