@@ -3,7 +3,8 @@ import 'package:paaieds/config/app_colors.dart';
 
 class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String topic;
-  final String level;
+  final String? level;
+  final String? subtopic;
   final int? completedSections;
   final int? totalSections;
   final int? lives;
@@ -12,11 +13,12 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
   const RoadmapAppBar({
     super.key,
     required this.topic,
-    required this.level,
+    this.level,
     this.completedSections,
     this.totalSections,
     this.lives,
     required this.onClose,
+    this.subtopic,
   });
 
   @override
@@ -25,25 +27,27 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Container(
-          height: kToolbarHeight + 20,
+          // Eliminamos la altura fija para que se adapte
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
             ],
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+              // Contenedor de texto
+              Expanded(
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       topic,
@@ -52,18 +56,36 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
                         fontWeight: FontWeight.bold,
                         color: Colors.black87,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      level,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
+                    // Mostrar level o subtopic
+                    if (level != null)
+                      Text(
+                        level!,
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.grey,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    if (subtopic != null)
+                      Text(
+                        subtopic!,
+                        style: const TextStyle(
+                          fontSize: 6,
+                          color: Colors.grey,
+                        ),
+                        softWrap: true,
+                      ),
                   ],
                 ),
               ),
 
-              const Spacer(),
+              const SizedBox(width: 12),
 
+              // Indicador de secciones completadas
               if (completedSections != null && totalSections != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -71,10 +93,10 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.lightBlue.withValues(alpha: 0.2),
+                    color: AppColors.lightBlue.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.lightBlue.withValues(alpha: 0.4),
+                      color: AppColors.lightBlue.withOpacity(0.4),
                     ),
                   ),
                   child: Row(
@@ -100,6 +122,7 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
               if (completedSections != null && totalSections != null)
                 const SizedBox(width: 12),
 
+              // Vidas
               if (lives != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -107,11 +130,9 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.2),
+                    color: Colors.red.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.red.withValues(alpha: 0.4),
-                    ),
+                    border: Border.all(color: Colors.red.withOpacity(0.4)),
                   ),
                   child: Row(
                     children: [

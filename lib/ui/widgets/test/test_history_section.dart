@@ -5,6 +5,7 @@ import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
 import 'package:paaieds/ui/widgets/test/test_details_modal.dart';
 import 'package:paaieds/ui/widgets/test/test_history_card.dart';
+import 'package:paaieds/ui/widgets/util/empty_state.dart';
 import 'package:provider/provider.dart';
 
 class TestHistorySection extends StatelessWidget {
@@ -24,43 +25,15 @@ class TestHistorySection extends StatelessWidget {
         }
 
         if (historyProvider.testHistory.isEmpty) {
-          return _buildEmptyState();
+          return EmptyState(
+            title: "Aún no tienes historial",
+            message: "Genera y completa tu primer test.",
+            icon: Icons.history,
+          );
         }
 
         return _buildHistoryList(historyProvider);
       },
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Container(
-      height: 180,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(16),
-      ),
-      alignment: Alignment.center,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.history, size: 48, color: Colors.blueGrey[400]),
-          const SizedBox(height: 12),
-          Text(
-            "Aún no has realizado ningún test",
-            style: TextStyle(
-              color: Colors.blueGrey[400],
-              fontSize: 16,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "Genera y completa tu primer test",
-            style: TextStyle(color: Colors.blueGrey[300], fontSize: 14),
-          ),
-        ],
-      ),
     );
   }
 

@@ -6,12 +6,14 @@ class BlockOrderExercise extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
   final bool isAnswered;
+  final String? previousAnswer;
 
   const BlockOrderExercise({
     super.key,
     required this.exercise,
     required this.onAnswer,
     this.isAnswered = false,
+    this.previousAnswer,
   });
 
   @override
@@ -27,6 +29,15 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
     super.initState();
     final blocks = widget.exercise.data['blocks'] as List<dynamic>? ?? [];
     _availableBlocks = List<String>.from(blocks)..shuffle();
+
+    if (widget.previousAnswer != null && widget.previousAnswer!.isNotEmpty) {
+      _orderedBlocks.addAll(widget.previousAnswer!.split('|'));
+      //quitar los bloques ya ordenados de disponibles
+      _availableBlocks = List<String>.from(blocks)
+        ..removeWhere((block) => _orderedBlocks.contains(block));
+    } else {
+      _availableBlocks = List<String>.from(blocks)..shuffle();
+    }
   }
 
   void _onBlockTap(String block) {

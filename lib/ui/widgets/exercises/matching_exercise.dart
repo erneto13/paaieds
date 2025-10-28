@@ -7,12 +7,14 @@ class MatchingExercise extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
   final bool isAnswered;
+  final String? previousAnswer;
 
   const MatchingExercise({
     super.key,
     required this.exercise,
     required this.onAnswer,
     this.isAnswered = false,
+    this.previousAnswer,
   });
 
   @override
@@ -22,6 +24,23 @@ class MatchingExercise extends StatefulWidget {
 class _MatchingExerciseState extends State<MatchingExercise> {
   final Map<String, String> _userMatches = {};
   String? _selectedLeft;
+
+  @override
+  void initState() {
+    super.initState();
+    //cargar respuesta anterior si existe
+    if (widget.previousAnswer != null && widget.previousAnswer!.isNotEmpty) {
+      try {
+        final previousMatches =
+            jsonDecode(widget.previousAnswer!) as Map<String, dynamic>;
+        _userMatches.addAll(
+          previousMatches.map((k, v) => MapEntry(k, v.toString())),
+        );
+      } catch (e) {
+        print('Error al cargar respuesta anterior: $e');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

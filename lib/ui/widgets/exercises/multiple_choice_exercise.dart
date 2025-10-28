@@ -6,12 +6,14 @@ class MultipleChoiceExercise extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
   final bool isAnswered;
+  final String? previousAnswer;
 
   const MultipleChoiceExercise({
     super.key,
     required this.exercise,
     required this.onAnswer,
     this.isAnswered = false,
+    this.previousAnswer,
   });
 
   @override
@@ -20,6 +22,13 @@ class MultipleChoiceExercise extends StatefulWidget {
 
 class _MultipleChoiceExerciseState extends State<MultipleChoiceExercise> {
   String? _selectedOption;
+
+  @override
+  void initState() {
+    super.initState();
+    //si hay una respuesta anterior, establecerla
+    _selectedOption = widget.previousAnswer;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +41,7 @@ class _MultipleChoiceExerciseState extends State<MultipleChoiceExercise> {
         const SizedBox(height: 24),
         ...opciones.map((option) => _buildOption(option.toString())),
         const SizedBox(height: 24),
-        _buildSubmitButton(),
+        if (!widget.isAnswered) _buildSubmitButton(),
       ],
     );
   }

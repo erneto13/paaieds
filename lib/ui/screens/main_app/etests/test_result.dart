@@ -3,8 +3,8 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
-import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
 import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 
@@ -101,11 +101,10 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
         children: [
           Scaffold(
             backgroundColor: Colors.white,
-            appBar: CustomAppBar(
-              title: '¡Diagnóstico completado!',
-              isIcon: false,
-              customIcon: Icons.close,
-              onCustomIconTap: _isLoading
+            appBar: RoadmapAppBar(
+              topic: 'Resultados del Diagnóstico',
+              level: 'sobre ${widget.topic.toTitleCase()}',
+              onClose: () => _isLoading
                   ? null
                   : () async {
                       final shouldPop = await _onWillPop();
@@ -133,22 +132,10 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
                               child: Text(
                                 '¡Diagnóstico Completado!',
                                 style: TextStyle(
-                                  fontSize: 28,
+                                  fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blueAccent,
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            FadeInDown(
-                              duration: const Duration(milliseconds: 600),
-                              child: Text(
-                                widget.topic.toTitleCase(),
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  color: Colors.grey[700],
-                                ),
-                                textAlign: TextAlign.center,
                               ),
                             ),
                             const SizedBox(height: 40),

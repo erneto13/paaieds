@@ -157,7 +157,7 @@ class TestScreen extends StatelessWidget {
                 }
               },
             ),
-            backgroundColor: Colors.white10,
+            backgroundColor: Colors.white,
             body: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),

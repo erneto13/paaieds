@@ -9,8 +9,10 @@ import 'package:paaieds/core/providers/exercise_provider.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/ui/widgets/exercises/block_order_exercise.dart';
 import 'package:paaieds/ui/widgets/exercises/code_exercise.dart';
+import 'package:paaieds/ui/widgets/exercises/matching_exercise.dart';
 import 'package:paaieds/ui/widgets/exercises/multiple_choice_exercise.dart';
 import 'package:paaieds/ui/widgets/roadmap/roadmap_custom_app_bar.dart';
+import 'package:paaieds/ui/widgets/roadmap/roadmap_sumary_section.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/util/snackbar.dart';
 import 'package:provider/provider.dart';
@@ -54,12 +56,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final userId = authProvider.currentUser?.uid;
     final roadmapId = roadmapProvider.currentRoadmap?.id;
 
-    print('🔍 VERIFICANDO IDs EN EXERCISE_SCREEN:');
-    print('   Usuario UID: ${userId ?? "NULL"}');
-    print('   Roadmap ID: ${roadmapId ?? "NULL"}');
-    print('   Sección ID: ${widget.section.id}');
-    print('   Sección: ${widget.section.subtopic}');
-
     //validar usuario
     if (userId == null || userId.isEmpty) {
       if (!mounted) return;
@@ -83,8 +79,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       Navigator.pop(context);
       return;
     }
-
-    print('✅ Todos los IDs son válidos, generando ejercicios...');
 
     final success = await exerciseProvider.generateExercisesForSection(
       userId: userId,
@@ -161,8 +155,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       listen: false,
     );
 
-    print('✅ Completando sección con theta: $newTheta');
-
     final success = await roadmapProvider.updateSectionCompletion(
       userId: authProvider.currentUser!.uid,
       sectionId: widget.section.id,
@@ -199,7 +191,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       listen: false,
     );
 
-    // Identificar conceptos fallidos basados en los ejercicios incorrectos
+    //identificar conceptos fallidos basados en los ejercicios incorrectos
     exerciseProvider.currentProgress!.attempts
         .where((attempt) => !attempt.isCorrect)
         .toList();
@@ -253,7 +245,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       child: Scaffold(
         appBar: RoadmapAppBar(
           topic: widget.section.bloomLevel,
-          level: widget.section.subtopic,
+          subtopic: widget.section.subtopic,
           lives: 3,
           onClose: () async {
             final confirm = await showDialog<bool>(
@@ -267,7 +259,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 },
               ),
             );
-            if (confirm == true && mounted) {
+            if (confirm == true && context.mounted) {
               Navigator.pop(context);
             }
           },
@@ -285,27 +277,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               return _buildEmptyState();
             }
 
-            return Column(
-              children: [
-                _buildProgressBar(exerciseProvider),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(24),
-                    child: Column(
-                      children: [
-                        _buildExerciseWidget(exerciseProvider),
-                        if (exerciseProvider.showingResult) ...[
-                          const SizedBox(height: 24),
-                          _buildResultCard(exerciseProvider),
-                          const SizedBox(height: 24),
-                          _buildNavigationButton(exerciseProvider),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            );
+            return _buildBody(exerciseProvider);
           },
         ),
       ),
@@ -368,6 +340,203 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     );
   }
 
+  Widget _buildBody(ExerciseProvider provider) {
+    if (provider.isSectionAlreadyCompleted) {
+      return SingleChildScrollView(child: _buildCompletedBanner(provider));
+    }
+
+    return Column(
+      children: [
+        _buildProgressBar(provider),
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              children: [
+                _buildExerciseWidget(provider),
+
+                //solo mostrar resultado y boton siguiente si NO esta completada
+                if (!provider.isSectionAlreadyCompleted) ...[
+                  if (provider.showingResult) ...[
+                    const SizedBox(height: 24),
+                    _buildResultCard(provider),
+                    const SizedBox(height: 24),
+                    _buildNavigationButton(provider),
+                  ],
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCompletedBanner(ExerciseProvider provider) {
+    return FadeInDown(
+      duration: const Duration(milliseconds: 700),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+        child: Column(
+          children: [
+            // 🔹 Banner compacto de completado
+            Card(
+              color: Colors.green[50],
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 4,
+              shadowColor: Colors.green.withValues(alpha: 0.25),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.emoji_events,
+                      color: Colors.green[700],
+                      size: 48,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '¡Sección completada!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.green[800],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 22,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Ya completaste esta sección anteriormente.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.green[700],
+                        fontSize: 15,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => Navigator.pop(context),
+                            icon: const Icon(Icons.arrow_back, size: 18),
+                            label: const Text('Volver'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.green[700],
+                              side: const BorderSide(
+                                color: Colors.green,
+                                width: 2,
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _handleRetrySection(provider),
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Reintentar'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0XFF00c951),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 🔹 Espacio entre el banner y el resumen
+            const SizedBox(height: 20),
+
+            // 🔹 Tarjeta de resumen (fuera del banner)
+            SectionSummaryCard(
+              section: widget.section,
+              finalTheta: widget.currentTheta,
+              correctAnswers: provider.getCorrectAnswersForSection(),
+              totalQuestions: provider.getTotalQuestionsForSection(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleRetrySection(ExerciseProvider provider) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('¿Reintentar sección?'),
+        content: const Text(
+          'Se generarán nuevos ejercicios y tu progreso anterior se reiniciará. '
+          '¿Deseas continuar?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+            child: const Text(
+              'Reintentar',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true || !mounted) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    CustomSnackbar.showInfo(
+      context: context,
+      message: 'Generando nuevos ejercicios...',
+      description: 'Por favor espera un momento',
+    );
+
+    final success = await provider.retryCompletedSection(
+      userId: authProvider.currentUser!.uid,
+      roadmapId: widget.section.id,
+      section: widget.section,
+      currentTheta: widget.currentTheta,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      CustomSnackbar.showSuccess(
+        context: context,
+        message: 'Ejercicios regenerados',
+        description: '¡Comienza de nuevo!',
+      );
+    } else {
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error al regenerar ejercicios',
+        description: provider.errorMessage ?? 'Intenta más tarde',
+      );
+    }
+  }
+
   Widget _buildExerciseWidget(ExerciseProvider provider) {
     final exercise = provider.currentExercise!;
 
@@ -400,6 +569,15 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
       case ExerciseType.code:
         return CodeExercise(
+          exercise: exercise,
+          onAnswer: (answer) {
+            provider.submitAnswer(answer);
+          },
+          isAnswered: provider.showingResult,
+        );
+
+      case ExerciseType.matching:
+        return MatchingExercise(
           exercise: exercise,
           onAnswer: (answer) {
             provider.submitAnswer(answer);

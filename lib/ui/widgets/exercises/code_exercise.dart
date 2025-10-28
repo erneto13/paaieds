@@ -6,12 +6,14 @@ class CodeExercise extends StatefulWidget {
   final Exercise exercise;
   final Function(String) onAnswer;
   final bool isAnswered;
+  final String? previousAnswer;
 
   const CodeExercise({
     super.key,
     required this.exercise,
     required this.onAnswer,
     this.isAnswered = false,
+    this.previousAnswer,
   });
 
   @override
@@ -21,6 +23,12 @@ class CodeExercise extends StatefulWidget {
 class _CodeExerciseState extends State<CodeExercise> {
   String? _selectedOption;
   bool _showHints = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedOption = widget.previousAnswer;
+  }
 
   @override
   Widget build(BuildContext context) {

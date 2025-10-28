@@ -19,7 +19,6 @@ class ExerciseProvider extends ChangeNotifier {
   bool _showingResult = false;
   bool _isCorrectAnswer = false;
   bool _isSectionAlreadyCompleted = false;
-
   String? _currentUserId;
   String? _currentRoadmapId;
 
@@ -41,6 +40,7 @@ class ExerciseProvider extends ChangeNotifier {
     return _exercises[_currentExerciseIndex];
   }
 
+  //genera ejercicios para una sección
   Future<bool> generateExercisesForSection({
     required String userId,
     required String roadmapId,
@@ -55,13 +55,7 @@ class ExerciseProvider extends ChangeNotifier {
       return false;
     }
 
-    _exercises = [];
-    _currentProgress = null;
-    _currentExerciseIndex = 0;
-    _showingResult = false;
-    _isCorrectAnswer = false;
-    _isSectionAlreadyCompleted = false;
-
+    _resetState();
     _isLoading = true;
     _errorMessage = null;
     _currentUserId = userId;
@@ -69,292 +63,39 @@ class ExerciseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      print('🔍 VERIFICANDO EJERCICIOS GUARDADOS');
-      print('   Usuario: $userId');
-      print('   Roadmap: $roadmapId');
-      print('   Sección: ${section.id} - ${section.subtopic}');
+      final (savedExercises, savedProgress) = await _loadSavedData(
+        userId: userId,
+        roadmapId: roadmapId,
+        sectionId: section.id,
+      );
 
-      List<Exercise>? savedExercises;
-      SectionProgress? savedProgress;
-
-      try {
-        savedExercises = await _userService.getSectionExercises(
-          uid: userId,
-          roadmapId: roadmapId,
-          sectionId: section.id,
-        );
-
-        savedProgress = await _userService.getSectionProgress(
-          uid: userId,
-          roadmapId: roadmapId,
-          sectionId: section.id,
-        );
-      } catch (e) {
-        print('ℹ️ PRIMERA VEZ :: SE GENERARÁN EJERCICIOS NUEVOS');
-        print('   Razón: $e');
-        savedExercises = null;
-        savedProgress = null;
-      }
-
-      //si existen ejercicios guardados y NO se fuerza regenerar
       if (savedExercises != null &&
           savedExercises.isNotEmpty &&
           !forceRegenerate) {
-        _exercises = savedExercises;
-        _currentProgress =
-            savedProgress ??
-            SectionProgress(
-              sectionId: section.id,
-              currentTheta: currentTheta,
-              attempts: [],
-              correctCount: 0,
-              totalAttempts: 0,
-            );
-
-        //verificar si la seccion ya esta completada
-        if (savedProgress != null &&
-            savedProgress.totalAttempts >= savedExercises.length) {
-          print('✅ SECCIÓN YA COMPLETADA ANTERIORMENTE');
-          print(
-            '   Progreso: ${savedProgress.totalAttempts}/${savedExercises.length}',
-          );
-          print('   Cargando ejercicios existentes para revisión...');
-
-          _isSectionAlreadyCompleted = true;
-          _currentExerciseIndex = 0;
-        } else {
-          //seccion en progreso - continuar donde se quedo
-          _currentExerciseIndex =
-              _currentProgress!.totalAttempts < _exercises.length
-              ? _currentProgress!.totalAttempts
-              : 0;
-
-          print('📚 CONTINUANDO SECCIÓN EN PROGRESO');
-          print(
-            '   Progreso: ${_currentProgress!.totalAttempts}/${_exercises.length}',
-          );
-        }
-
-        print('✅ CARGADOS ${_exercises.length} EJERCICIOS GUARDADOS');
+        _handleExistingExercises(
+          savedExercises,
+          savedProgress,
+          section.id,
+          currentTheta,
+        );
       } else {
-        //generar nuevos ejercicios
-        print('📝 Generando nuevos ejercicios para: ${section.subtopic}');
-
-        _exercises = await _exerciseService.generateExercises(
-          subtopic: section.subtopic,
-          description: section.description,
+        await _generateAndSaveNewExercises(
+          section: section,
           currentTheta: currentTheta,
-          objectives: section.objectives,
-        );
-
-        if (_exercises.isEmpty) {
-          throw Exception('No se generaron ejercicios');
-        }
-
-        _currentProgress = SectionProgress(
-          sectionId: section.id,
-          currentTheta: currentTheta,
-          attempts: [],
-          correctCount: 0,
-          totalAttempts: 0,
-        );
-
-        _currentExerciseIndex = 0;
-
-        print('💾 Guardando ${_exercises.length} ejercicios...');
-        print(
-          '   Path: users/$userId/roadmaps/$roadmapId/exercises/${section.id}',
-        );
-
-        final saved = await _userService.saveSectionExercises(
-          uid: userId,
+          userId: userId,
           roadmapId: roadmapId,
-          sectionId: section.id,
-          exercises: _exercises,
         );
-
-        if (saved) {
-          print('✅ Ejercicios guardados exitosamente');
-        } else {
-          print(
-            '⚠️ No se pudieron guardar los ejercicios (pero se pueden usar)',
-          );
-        }
       }
 
       _isLoading = false;
       notifyListeners();
       return true;
-    } catch (e, stackTrace) {
+    } catch (e) {
       _errorMessage = 'Error al generar ejercicios: $e';
-      print('❌ ERROR CRÍTICO: $_errorMessage');
-      print('❌ Stack trace: $stackTrace');
       _isLoading = false;
       notifyListeners();
       return false;
     }
-  }
-
-  //metodo para reintentar una seccion completada
-  Future<bool> retryCompletedSection({
-    required String userId,
-    required String roadmapId,
-    required RoadmapSection section,
-    required double currentTheta,
-  }) async {
-    print('🔄 REINTENTANDO SECCIÓN COMPLETADA');
-
-    //resetear el progreso guardado
-    await _userService.saveSectionProgress(
-      uid: userId,
-      roadmapId: roadmapId,
-      sectionId: section.id,
-      progress: SectionProgress(
-        sectionId: section.id,
-        currentTheta: currentTheta,
-        attempts: [],
-        correctCount: 0,
-        totalAttempts: 0,
-        isCompleted: false,
-      ),
-    );
-
-    //regenerar ejercicios
-    return await generateExercisesForSection(
-      userId: userId,
-      roadmapId: roadmapId,
-      section: section,
-      currentTheta: currentTheta,
-      forceRegenerate: true,
-    );
-  }
-
-  void submitAnswer(String userAnswer) {
-    if (currentExercise == null || _currentProgress == null) return;
-
-    //si la seccion ya estaba completada, no permitir enviar respuestas
-    if (_isSectionAlreadyCompleted) {
-      print('⚠️ No se puede enviar respuesta: sección ya completada');
-      return;
-    }
-
-    final exercise = currentExercise!;
-    final isCorrect = _checkAnswer(exercise, userAnswer);
-
-    final attempt = ExerciseAttempt(
-      exerciseId: exercise.id,
-      userAnswer: userAnswer,
-      isCorrect: isCorrect,
-      timestamp: DateTime.now(),
-    );
-
-    _currentProgress = SectionProgress(
-      sectionId: _currentProgress!.sectionId,
-      currentTheta: _currentProgress!.currentTheta,
-      attempts: [..._currentProgress!.attempts, attempt],
-      correctCount: _currentProgress!.correctCount + (isCorrect ? 1 : 0),
-      totalAttempts: _currentProgress!.totalAttempts + 1,
-    );
-
-    _isCorrectAnswer = isCorrect;
-    _showingResult = true;
-
-    _saveProgress();
-
-    notifyListeners();
-  }
-
-  Future<void> _saveProgress() async {
-    if (_currentUserId == null ||
-        _currentRoadmapId == null ||
-        _currentProgress == null) {
-      print('⚠️ No se puede guardar progreso: IDs nulos');
-      return;
-    }
-
-    try {
-      await _userService.saveSectionProgress(
-        uid: _currentUserId!,
-        roadmapId: _currentRoadmapId!,
-        sectionId: _currentProgress!.sectionId,
-        progress: _currentProgress!,
-      );
-      print('✅ Progreso guardado correctamente');
-    } catch (e) {
-      print('❌ Error al guardar progreso: $e');
-      notifyListeners();
-    }
-  }
-
-  bool _checkAnswer(Exercise exercise, String userAnswer) {
-    switch (exercise.type) {
-      case ExerciseType.multipleChoice:
-        return userAnswer.trim().toLowerCase() ==
-            exercise.correctAnswer.trim().toLowerCase();
-
-      case ExerciseType.blockOrder:
-        return userAnswer == exercise.correctAnswer;
-
-      case ExerciseType.code:
-        return userAnswer.trim().toLowerCase() ==
-            exercise.correctAnswer.trim().toLowerCase();
-
-      case ExerciseType.matching:
-        try {
-          final userMatches = jsonDecode(userAnswer) as Map<String, dynamic>;
-          final correctMatches =
-              jsonDecode(exercise.correctAnswer) as Map<String, dynamic>;
-
-          if (userMatches.length != correctMatches.length) return false;
-
-          for (final entry in userMatches.entries) {
-            if (correctMatches[entry.key] != entry.value) {
-              return false;
-            }
-          }
-
-          return true;
-        } catch (e) {
-          print('❌ Error al verificar matching: $e');
-          return false;
-        }
-    }
-  }
-
-  void nextExercise() {
-    if (hasMoreExercises) {
-      _currentExerciseIndex++;
-      _showingResult = false;
-      _isCorrectAnswer = false;
-      notifyListeners();
-    }
-  }
-
-  Map<String, dynamic> calculateNewTheta() {
-    if (_currentProgress == null) {
-      return {'theta': 0.0, 'improved': false};
-    }
-
-    final responses = _currentProgress!.attempts.map((attempt) {
-      return {'isCorrect': attempt.isCorrect};
-    }).toList();
-
-    if (responses.isEmpty) {
-      return {'theta': _currentProgress!.currentTheta, 'improved': false};
-    }
-
-    final results = IRTService.evaluateAbility(responses: responses);
-    final newTheta = results['theta'] as double;
-    final improved = newTheta > _currentProgress!.currentTheta;
-
-    return {
-      'oldTheta': _currentProgress!.currentTheta,
-      'newTheta': newTheta,
-      'improved': improved,
-      'percentage': results['percentage'],
-      'correctAnswers': results['correctAnswers'],
-      'totalQuestions': results['totalQuestions'],
-    };
   }
 
   Future<bool> generateReinforcementExercises({
@@ -387,6 +128,121 @@ class ExerciseProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> retryCompletedSection({
+    required String userId,
+    required String roadmapId,
+    required RoadmapSection section,
+    required double currentTheta,
+  }) async {
+    await _userService.saveSectionProgress(
+      uid: userId,
+      roadmapId: roadmapId,
+      sectionId: section.id,
+      progress: SectionProgress(
+        sectionId: section.id,
+        currentTheta: currentTheta,
+        attempts: [],
+        correctCount: 0,
+        totalAttempts: 0,
+        isCompleted: false,
+      ),
+    );
+
+    return await generateExercisesForSection(
+      userId: userId,
+      roadmapId: roadmapId,
+      section: section,
+      currentTheta: currentTheta,
+      forceRegenerate: true,
+    );
+  }
+
+  void submitAnswer(String userAnswer) {
+    if (currentExercise == null || _currentProgress == null) return;
+
+    if (_isSectionAlreadyCompleted) {
+      return;
+    }
+
+    final exercise = currentExercise!;
+    final isCorrect = _checkAnswer(exercise, userAnswer);
+
+    final attempt = ExerciseAttempt(
+      exerciseId: exercise.id,
+      userAnswer: userAnswer,
+      isCorrect: isCorrect,
+      timestamp: DateTime.now(),
+    );
+
+    _currentProgress = SectionProgress(
+      sectionId: _currentProgress!.sectionId,
+      currentTheta: _currentProgress!.currentTheta,
+      attempts: [..._currentProgress!.attempts, attempt],
+      correctCount: _currentProgress!.correctCount + (isCorrect ? 1 : 0),
+      totalAttempts: _currentProgress!.totalAttempts + 1,
+    );
+
+    _isCorrectAnswer = isCorrect;
+    _showingResult = true;
+
+    _saveProgress();
+    notifyListeners();
+  }
+
+  bool _checkAnswer(Exercise exercise, String userAnswer) {
+    switch (exercise.type) {
+      case ExerciseType.multipleChoice:
+        return userAnswer.trim().toLowerCase() ==
+            exercise.correctAnswer.trim().toLowerCase();
+
+      case ExerciseType.blockOrder:
+        return userAnswer == exercise.correctAnswer;
+
+      case ExerciseType.code:
+        return userAnswer.trim().toLowerCase() ==
+            exercise.correctAnswer.trim().toLowerCase();
+
+      case ExerciseType.matching:
+        try {
+          final userMatches = jsonDecode(userAnswer) as Map<String, dynamic>;
+          final correctMatches =
+              jsonDecode(exercise.correctAnswer) as Map<String, dynamic>;
+
+          if (userMatches.length != correctMatches.length) return false;
+
+          for (final entry in userMatches.entries) {
+            if (correctMatches[entry.key] != entry.value) {
+              return false;
+            }
+          }
+
+          return true;
+        } catch (e) {
+          return false;
+        }
+    }
+  }
+
+  void nextExercise() {
+    if (hasMoreExercises) {
+      _currentExerciseIndex++;
+
+      if (_isSectionAlreadyCompleted && _currentProgress != null) {
+        final currentAttempt = _currentProgress!.attempts.firstWhere(
+          (a) => a.exerciseId == currentExercise!.id,
+          orElse: () => _currentProgress!.attempts[_currentExerciseIndex],
+        );
+        _showingResult = true;
+        _isCorrectAnswer = currentAttempt.isCorrect;
+      } else {
+        _showingResult = false;
+        _isCorrectAnswer = false;
+      }
+
+      notifyListeners();
+    }
+  }
+
   SectionProgress? completeSection() {
     if (_currentProgress == null) return null;
 
@@ -411,6 +267,72 @@ class ExerciseProvider extends ChangeNotifier {
     return finalProgress;
   }
 
+  String? getCurrentExerciseUserAnswer() {
+    if (_currentProgress == null || currentExercise == null) return null;
+
+    try {
+      final attempt = _currentProgress!.attempts.firstWhere(
+        (a) => a.exerciseId == currentExercise!.id,
+      );
+      return attempt.userAnswer;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  bool? isCurrentExerciseCorrect() {
+    if (_currentProgress == null || currentExercise == null) return null;
+
+    try {
+      final attempt = _currentProgress!.attempts.firstWhere(
+        (a) => a.exerciseId == currentExercise!.id,
+      );
+      return attempt.isCorrect;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Map<String, dynamic> calculateNewTheta() {
+    if (_currentProgress == null) {
+      return {'theta': 0.0, 'improved': false};
+    }
+
+    final responses = _currentProgress!.attempts.map((attempt) {
+      return {'isCorrect': attempt.isCorrect};
+    }).toList();
+
+    if (responses.isEmpty) {
+      return {'theta': _currentProgress!.currentTheta, 'improved': false};
+    }
+
+    final results = IRTService.evaluateAbility(responses: responses);
+    final newTheta = results['theta'] as double;
+    final improved = newTheta > _currentProgress!.currentTheta;
+
+    return {
+      'oldTheta': _currentProgress!.currentTheta,
+      'newTheta': newTheta,
+      'improved': improved,
+      'percentage': results['percentage'],
+      'correctAnswers': results['correctAnswers'],
+      'totalQuestions': results['totalQuestions'],
+    };
+  }
+
+  int getCorrectAnswersForSection() {
+    return _currentProgress?.correctCount ?? 0;
+  }
+
+  int getIncorrectAnswersForSection() {
+    if (_currentProgress == null) return 0;
+    return _currentProgress!.totalAttempts - _currentProgress!.correctCount;
+  }
+
+  int getTotalQuestionsForSection() {
+    return _exercises.length;
+  }
+
   void reset() {
     _exercises = [];
     _currentProgress = null;
@@ -432,9 +354,127 @@ class ExerciseProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  @override
-  void dispose() {
-    print('🗑️ ExerciseProvider disposed');
-    super.dispose();
+  void _resetState() {
+    _exercises = [];
+    _currentProgress = null;
+    _currentExerciseIndex = 0;
+    _showingResult = false;
+    _isCorrectAnswer = false;
+    _isSectionAlreadyCompleted = false;
+  }
+
+  Future<(List<Exercise>?, SectionProgress?)> _loadSavedData({
+    required String userId,
+    required String roadmapId,
+    required String sectionId,
+  }) async {
+    try {
+      final exercises = await _userService.getSectionExercises(
+        uid: userId,
+        roadmapId: roadmapId,
+        sectionId: sectionId,
+      );
+
+      final progress = await _userService.getSectionProgress(
+        uid: userId,
+        roadmapId: roadmapId,
+        sectionId: sectionId,
+      );
+
+      return (exercises, progress);
+    } catch (e) {
+      return (null, null);
+    }
+  }
+
+  void _handleExistingExercises(
+    List<Exercise> savedExercises,
+    SectionProgress? savedProgress,
+    String sectionId,
+    double currentTheta,
+  ) {
+    _exercises = savedExercises;
+    _currentProgress =
+        savedProgress ??
+        SectionProgress(
+          sectionId: sectionId,
+          currentTheta: currentTheta,
+          attempts: [],
+          correctCount: 0,
+          totalAttempts: 0,
+        );
+
+    if (savedProgress != null &&
+        savedProgress.totalAttempts >= savedExercises.length) {
+      _isSectionAlreadyCompleted = true;
+      _currentExerciseIndex = 0;
+
+      if (_currentProgress!.attempts.isNotEmpty) {
+        _showingResult = true;
+        _isCorrectAnswer = _currentProgress!.attempts[0].isCorrect;
+      }
+    } else {
+      _currentExerciseIndex =
+          _currentProgress!.totalAttempts < _exercises.length
+          ? _currentProgress!.totalAttempts
+          : 0;
+    }
+  }
+
+  Future<void> _generateAndSaveNewExercises({
+    required RoadmapSection section,
+    required double currentTheta,
+    required String userId,
+    required String roadmapId,
+  }) async {
+    _exercises = await _exerciseService.generateExercises(
+      subtopic: section.subtopic,
+      description: section.description,
+      currentTheta: currentTheta,
+      objectives: section.objectives,
+    );
+
+    if (_exercises.isEmpty) {
+      throw Exception('No se generaron ejercicios');
+    }
+
+    _currentProgress = SectionProgress(
+      sectionId: section.id,
+      currentTheta: currentTheta,
+      attempts: [],
+      correctCount: 0,
+      totalAttempts: 0,
+    );
+
+    _currentExerciseIndex = 0;
+
+    final saved = await _userService.saveSectionExercises(
+      uid: userId,
+      roadmapId: roadmapId,
+      sectionId: section.id,
+      exercises: _exercises,
+    );
+
+    if (saved) {
+    } else {}
+  }
+
+  Future<void> _saveProgress() async {
+    if (_currentUserId == null ||
+        _currentRoadmapId == null ||
+        _currentProgress == null) {
+      return;
+    }
+
+    try {
+      await _userService.saveSectionProgress(
+        uid: _currentUserId!,
+        roadmapId: _currentRoadmapId!,
+        sectionId: _currentProgress!.sectionId,
+        progress: _currentProgress!,
+      );
+    } catch (e) {
+      notifyListeners();
+    }
   }
 }

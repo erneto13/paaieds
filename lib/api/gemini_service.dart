@@ -29,7 +29,7 @@ class GeminiService {
       return data["candidates"][0]["content"]["parts"][0]["text"];
     } else {
       throw Exception(
-        "Error de la API de Gemini (${response.statusCode}): ${response.body}",
+        "Error en la API (${response.statusCode}): ${response.body}",
       );
     }
   }
