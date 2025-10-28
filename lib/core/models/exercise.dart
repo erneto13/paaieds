@@ -1,4 +1,6 @@
-enum ExerciseType { multipleChoice, blockOrder, code }
+import 'dart:convert';
+
+enum ExerciseType { multipleChoice, blockOrder, code, matching }
 
 class Exercise {
   final String id;
@@ -32,6 +34,9 @@ class Exercise {
       case 'code':
         exerciseType = ExerciseType.code;
         break;
+      case 'matching':
+        exerciseType = ExerciseType.matching;
+        break;
       default:
         exerciseType = ExerciseType.multipleChoice;
     }
@@ -54,11 +59,22 @@ class Exercise {
     switch (type) {
       case ExerciseType.multipleChoice:
         return json['correctAnswer'] ?? '';
+
       case ExerciseType.blockOrder:
         final correctOrder = json['correctOrder'] as List<dynamic>?;
         return correctOrder?.join('|') ?? '';
+
       case ExerciseType.code:
-        return json['correctCode'] ?? '';
+        //para ejercicios tipo code, ahora la respuesta correcta es una de las opciones
+        return json['correctAnswer'] ?? '';
+
+      case ExerciseType.matching:
+        //para matching, guardamos el mapa de relaciones correctas como json
+        final correctMatches = json['correctMatches'];
+        if (correctMatches != null) {
+          return jsonEncode(correctMatches);
+        }
+        return '{}';
     }
   }
 
@@ -82,6 +98,8 @@ class Exercise {
         return 'block_order';
       case ExerciseType.code:
         return 'code';
+      case ExerciseType.matching:
+        return 'matching';
     }
   }
 }

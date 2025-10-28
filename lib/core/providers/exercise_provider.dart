@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:paaieds/core/algorithm/irt_service.dart';
 import 'package:paaieds/core/models/exercise.dart';
@@ -16,6 +18,7 @@ class ExerciseProvider extends ChangeNotifier {
   String? _errorMessage;
   bool _showingResult = false;
   bool _isCorrectAnswer = false;
+  bool _isSectionAlreadyCompleted = false;
 
   String? _currentUserId;
   String? _currentRoadmapId;
@@ -29,6 +32,7 @@ class ExerciseProvider extends ChangeNotifier {
   bool get isCorrectAnswer => _isCorrectAnswer;
   bool get hasMoreExercises => _currentExerciseIndex < _exercises.length - 1;
   bool get isLastExercise => _currentExerciseIndex == _exercises.length - 1;
+  bool get isSectionAlreadyCompleted => _isSectionAlreadyCompleted;
 
   Exercise? get currentExercise {
     if (_exercises.isEmpty || _currentExerciseIndex >= _exercises.length) {
@@ -42,8 +46,8 @@ class ExerciseProvider extends ChangeNotifier {
     required String roadmapId,
     required RoadmapSection section,
     required double currentTheta,
+    bool forceRegenerate = false,
   }) async {
-    //validar que los ids no esten vacios
     if (userId.isEmpty || roadmapId.isEmpty) {
       _errorMessage = 'IDs de usuario o roadmap inválidos';
       _isLoading = false;
@@ -51,12 +55,12 @@ class ExerciseProvider extends ChangeNotifier {
       return false;
     }
 
-    //limpiamos el estado anterior ANTES de cargar nuevos ejercicios
     _exercises = [];
     _currentProgress = null;
     _currentExerciseIndex = 0;
     _showingResult = false;
     _isCorrectAnswer = false;
+    _isSectionAlreadyCompleted = false;
 
     _isLoading = true;
     _errorMessage = null;
@@ -65,7 +69,6 @@ class ExerciseProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-
       print('🔍 VERIFICANDO EJERCICIOS GUARDADOS');
       print('   Usuario: $userId');
       print('   Roadmap: $roadmapId');
@@ -93,23 +96,10 @@ class ExerciseProvider extends ChangeNotifier {
         savedProgress = null;
       }
 
-      if (savedExercises != null && savedExercises.isNotEmpty) {
-        //si ya existe progreso, verificar si la seccion esta completa
-        if (savedProgress != null &&
-            savedProgress.totalAttempts >= savedExercises.length) {
-          print('⚠️ SECCIÓN YA COMPLETADA');
-          print(
-            '   Progreso: ${savedProgress.totalAttempts}/${savedExercises.length}',
-          );
-          print('   Regenerando ejercicios nuevos...');
-
-          //forzar generacion de nuevos ejercicios
-          savedExercises = null;
-          savedProgress = null;
-        }
-      }
-
-      if (savedExercises != null && savedExercises.isNotEmpty) {
+      //si existen ejercicios guardados y NO se fuerza regenerar
+      if (savedExercises != null &&
+          savedExercises.isNotEmpty &&
+          !forceRegenerate) {
         _exercises = savedExercises;
         _currentProgress =
             savedProgress ??
@@ -121,16 +111,33 @@ class ExerciseProvider extends ChangeNotifier {
               totalAttempts: 0,
             );
 
-        _currentExerciseIndex =
-            _currentProgress!.totalAttempts < _exercises.length
-            ? _currentProgress!.totalAttempts
-            : 0;
+        //verificar si la seccion ya esta completada
+        if (savedProgress != null &&
+            savedProgress.totalAttempts >= savedExercises.length) {
+          print('✅ SECCIÓN YA COMPLETADA ANTERIORMENTE');
+          print(
+            '   Progreso: ${savedProgress.totalAttempts}/${savedExercises.length}',
+          );
+          print('   Cargando ejercicios existentes para revisión...');
+
+          _isSectionAlreadyCompleted = true;
+          _currentExerciseIndex = 0;
+        } else {
+          //seccion en progreso - continuar donde se quedo
+          _currentExerciseIndex =
+              _currentProgress!.totalAttempts < _exercises.length
+              ? _currentProgress!.totalAttempts
+              : 0;
+
+          print('📚 CONTINUANDO SECCIÓN EN PROGRESO');
+          print(
+            '   Progreso: ${_currentProgress!.totalAttempts}/${_exercises.length}',
+          );
+        }
 
         print('✅ CARGADOS ${_exercises.length} EJERCICIOS GUARDADOS');
-        print(
-          '   Progreso: ${_currentProgress!.totalAttempts}/${_exercises.length}',
-        );
       } else {
+        //generar nuevos ejercicios
         print('📝 Generando nuevos ejercicios para: ${section.subtopic}');
 
         _exercises = await _exerciseService.generateExercises(
@@ -188,8 +195,48 @@ class ExerciseProvider extends ChangeNotifier {
     }
   }
 
+  //metodo para reintentar una seccion completada
+  Future<bool> retryCompletedSection({
+    required String userId,
+    required String roadmapId,
+    required RoadmapSection section,
+    required double currentTheta,
+  }) async {
+    print('🔄 REINTENTANDO SECCIÓN COMPLETADA');
+
+    //resetear el progreso guardado
+    await _userService.saveSectionProgress(
+      uid: userId,
+      roadmapId: roadmapId,
+      sectionId: section.id,
+      progress: SectionProgress(
+        sectionId: section.id,
+        currentTheta: currentTheta,
+        attempts: [],
+        correctCount: 0,
+        totalAttempts: 0,
+        isCompleted: false,
+      ),
+    );
+
+    //regenerar ejercicios
+    return await generateExercisesForSection(
+      userId: userId,
+      roadmapId: roadmapId,
+      section: section,
+      currentTheta: currentTheta,
+      forceRegenerate: true,
+    );
+  }
+
   void submitAnswer(String userAnswer) {
     if (currentExercise == null || _currentProgress == null) return;
+
+    //si la seccion ya estaba completada, no permitir enviar respuestas
+    if (_isSectionAlreadyCompleted) {
+      print('⚠️ No se puede enviar respuesta: sección ya completada');
+      return;
+    }
 
     final exercise = currentExercise!;
     final isCorrect = _checkAnswer(exercise, userAnswer);
@@ -249,12 +296,28 @@ class ExerciseProvider extends ChangeNotifier {
         return userAnswer == exercise.correctAnswer;
 
       case ExerciseType.code:
-        final cleanUser = userAnswer.replaceAll(RegExp(r'\s+'), '');
-        final cleanCorrect = exercise.correctAnswer.replaceAll(
-          RegExp(r'\s+'),
-          '',
-        );
-        return cleanUser.toLowerCase() == cleanCorrect.toLowerCase();
+        return userAnswer.trim().toLowerCase() ==
+            exercise.correctAnswer.trim().toLowerCase();
+
+      case ExerciseType.matching:
+        try {
+          final userMatches = jsonDecode(userAnswer) as Map<String, dynamic>;
+          final correctMatches =
+              jsonDecode(exercise.correctAnswer) as Map<String, dynamic>;
+
+          if (userMatches.length != correctMatches.length) return false;
+
+          for (final entry in userMatches.entries) {
+            if (correctMatches[entry.key] != entry.value) {
+              return false;
+            }
+          }
+
+          return true;
+        } catch (e) {
+          print('❌ Error al verificar matching: $e');
+          return false;
+        }
     }
   }
 
@@ -355,6 +418,7 @@ class ExerciseProvider extends ChangeNotifier {
     _errorMessage = null;
     _showingResult = false;
     _isCorrectAnswer = false;
+    _isSectionAlreadyCompleted = false;
     notifyListeners();
   }
 

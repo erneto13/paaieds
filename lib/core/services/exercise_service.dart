@@ -5,6 +5,48 @@ import 'package:paaieds/util/json_parser.dart';
 class ExerciseService {
   final GeminiService _geminiService = GeminiService();
 
+  //detectar si el tema es relacionado a programacion
+  bool _isProgrammingTopic(String subtopic, String description) {
+    final programmingKeywords = [
+      'código',
+      'code',
+      'programación',
+      'programming',
+      'función',
+      'function',
+      'variable',
+      'método',
+      'method',
+      'clase',
+      'class',
+      'algoritmo',
+      'algorithm',
+      'sintaxis',
+      'syntax',
+      'javascript',
+      'python',
+      'java',
+      'dart',
+      'flutter',
+      'react',
+      'angular',
+      'vue',
+      'node',
+      'api',
+      'framework',
+      'library',
+      'debugging',
+      'testing',
+      'desarrollo',
+      'development',
+    ];
+
+    final combinedText =
+        '${subtopic.toLowerCase()} ${description.toLowerCase()}';
+
+    return programmingKeywords.any((keyword) => combinedText.contains(keyword));
+  }
+
   Future<List<Exercise>> generateExercises({
     required String subtopic,
     required String description,
@@ -13,6 +55,8 @@ class ExerciseService {
     int count = 5,
     bool isReinforcement = false,
   }) async {
+    final isProgramming = _isProgrammingTopic(subtopic, description);
+
     final prompt = _buildExercisePrompt(
       subtopic: subtopic,
       description: description,
@@ -20,6 +64,7 @@ class ExerciseService {
       objectives: objectives,
       count: count,
       isReinforcement: isReinforcement,
+      isProgramming: isProgramming,
     );
 
     try {
@@ -36,7 +81,6 @@ class ExerciseService {
     }
   }
 
-  /// Genera ejercicios de refuerzo basados en conceptos donde el usuario falló
   Future<List<Exercise>> generateReinforcementExercises({
     required String subtopic,
     required List<String> failedConcepts,
@@ -59,11 +103,17 @@ class ExerciseService {
     required List<String> objectives,
     required int count,
     required bool isReinforcement,
+    required bool isProgramming,
   }) {
     final difficultyGuidance = _getDifficultyGuidance(currentTheta);
     final reinforcementNote = isReinforcement
         ? '\n**IMPORTANTE**: Estos son ejercicios de REFUERZO. Enfócate en los conceptos específicos donde el estudiante tuvo dificultades.'
         : '';
+
+    //definir tipos de ejercicios segun el tema
+    final exerciseTypes = isProgramming
+        ? _getProgrammingExerciseTypes()
+        : _getGeneralExerciseTypes();
 
     return '''
 Genera $count ejercicios dinámicos para el subtema "$subtopic".
@@ -75,14 +125,29 @@ $difficultyGuidance$reinforcementNote
 Objetivos de aprendizaje:
 ${objectives.map((o) => '- $o').join('\n')}
 
+$exerciseTypes
+
+**Requisitos**:
+- Varía los tipos de ejercicios
+- Ajusta la dificultad según el θ del estudiante
+- Incluye retroalimentación educativa
+- Asegúrate de que los ejercicios sean claros y verificables
+- Devuelve SOLO el JSON, sin texto adicional
+
+Genera los ejercicios ahora. No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
+''';
+  }
+
+  String _getProgrammingExerciseTypes() {
+    return '''
 **Tipos de ejercicios a incluir**:
 1. **multiple_choice**: Preguntas con 4 opciones, una correcta.
-2. **block_order**: Ordenar elementos (código, conceptos, pasos) en el orden correcto.
-3. **code**: Completar o escribir código según el enunciado. Si el $subtopic
+2. **block_order**: Ordenar líneas de código o pasos de un algoritmo en el orden correcto.
+3. **code**: Analizar un fragmento de código y seleccionar cuál será su salida/resultado.
 
 **Estructura JSON esperada**:
 {
-  "subtopic": "$subtopic",
+  "subtopic": "nombre del tema",
   "exercises": [
     {
       "type": "multiple_choice",
@@ -94,32 +159,75 @@ ${objectives.map((o) => '- $o').join('\n')}
     },
     {
       "type": "block_order",
-      "statement": "Instrucción para ordenar elementos",
-      "blocks": ["Elemento 1", "Elemento 2", "Elemento 3", "Elemento 4"],
-      "correctOrder": ["Elemento correcto 1", "Elemento correcto 2", ...],
+      "statement": "Instrucción para ordenar líneas de código",
+      "blocks": ["Línea 1", "Línea 2", "Línea 3", "Línea 4"],
+      "correctOrder": ["Línea correcta 1", "Línea correcta 2", ...],
       "feedback": "Explicación del orden correcto",
       "difficulty": 0.7
     },
     {
       "type": "code",
-      "statement": "Descripción del código a escribir",
-      "initialCode": "// Código de inicio (opcional)",
-      "correctCode": "código de solución",
+      "statement": "¿Cuál será la salida de este código?",
+      "codeSnippet": "código completo aquí",
+      "outputOptions": ["Salida A", "Salida B", "Salida C", "Salida D"],
+      "correctAnswer": "Salida correcta",
       "hints": ["Pista 1", "Pista 2"],
-      "feedback": "Explicación de la solución",
+      "feedback": "Explicación de la salida",
       "difficulty": 0.8
     }
   ]
 }
+''';
+  }
 
-**Requisitos**:
-- Varía los tipos de ejercicios
-- Ajusta la dificultad según el θ del estudiante
-- Incluye retroalimentación educativa
-- Asegúrate de que los ejercicios sean claros y verificables
-- Devuelve SOLO el JSON, sin texto adicional
+  String _getGeneralExerciseTypes() {
+    return '''
+**Tipos de ejercicios a incluir**:
+1. **multiple_choice**: Preguntas con 4 opciones, una correcta.
+2. **block_order**: Ordenar conceptos, pasos o elementos en el orden correcto.
+3. **matching**: Relacionar elementos de una columna con elementos de otra columna.
 
-Genera los ejercicios ahora. No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
+**Estructura JSON esperada**:
+{
+  "subtopic": "nombre del tema",
+  "exercises": [
+    {
+      "type": "multiple_choice",
+      "statement": "Pregunta clara y específica sobre el concepto",
+      "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
+      "correctAnswer": "Opción correcta",
+      "feedback": "Explicación breve de por qué es correcta",
+      "difficulty": 0.6
+    },
+    {
+      "type": "block_order",
+      "statement": "Instrucción para ordenar los elementos",
+      "blocks": ["Paso 1", "Paso 2", "Paso 3", "Paso 4"],
+      "correctOrder": ["Paso correcto 1", "Paso correcto 2", ...],
+      "feedback": "Explicación del orden correcto",
+      "difficulty": 0.7
+    },
+    {
+      "type": "matching",
+      "statement": "Relaciona cada concepto con su descripción correcta",
+      "leftColumn": ["Concepto A", "Concepto B", "Concepto C", "Concepto D"],
+      "rightColumn": ["Descripción 1", "Descripción 2", "Descripción 3", "Descripción 4"],
+      "correctMatches": {
+        "Concepto A": "Descripción correcta A",
+        "Concepto B": "Descripción correcta B",
+        "Concepto C": "Descripción correcta C",
+        "Concepto D": "Descripción correcta D"
+      },
+      "feedback": "Explicación de las relaciones correctas",
+      "difficulty": 0.7
+    }
+  ]
+}
+
+**IMPORTANTE**: 
+- NO uses ejemplos de programación en ejercicios de matching o block_order
+- Los ejercicios de matching deben relacionar conceptos del tema actual
+- Los ejercicios de block_order deben ordenar pasos, fases o conceptos del tema
 ''';
   }
 
