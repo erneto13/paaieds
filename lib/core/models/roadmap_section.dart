@@ -22,10 +22,15 @@ class RoadmapSection {
   });
 
   factory RoadmapSection.fromJson(Map<String, dynamic> json, int order) {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final subtopic = json['subtopic'] ?? '';
+    final uniqueId =
+        json['id'] ?? '$timestamp-$order-${subtopic.hashCode.abs()}';
+
     return RoadmapSection(
-      id: json['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: uniqueId,
       bloomLevel: json['bloomLevel'] ?? '',
-      subtopic: json['subtopic'] ?? '',
+      subtopic: subtopic,
       description: json['description'] ?? '',
       baseDifficulty: json['baseDifficulty'] ?? 'medium',
       objectives: List<String>.from(json['objectives'] ?? []),
