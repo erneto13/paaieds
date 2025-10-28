@@ -23,30 +23,11 @@ class _RegisterScreenState extends State<RegisterScreen>
   final TextEditingController _confirmPasswordController =
       TextEditingController();
 
-  bool _keyboardVisible = false;
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(
-      LifecycleEventHandler(onMetricsChanged: _updateKeyboardVisibility),
-    );
-  }
-
-  void _updateKeyboardVisibility() {
-    final visible = MediaQuery.of(context).viewInsets.bottom > 0;
-    if (visible != _keyboardVisible) {
-      setState(() => _keyboardVisible = visible);
-    }
-  }
-
-  @override
   void dispose() {
-    WidgetsBinding.instance.removeObserver(
-      LifecycleEventHandler(onMetricsChanged: _updateKeyboardVisibility),
-    );
     _firstNameController.dispose();
     _lastNameController.dispose();
     _emailController.dispose();
@@ -121,13 +102,6 @@ class _RegisterScreenState extends State<RegisterScreen>
         message: 'Cuenta creada',
         description: 'Inicia sesión para usar tu cuenta.',
       );
-      await Future.delayed(const Duration(seconds: 1));
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        // ignore: use_build_context_synchronously
-        context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
-      );
     } else {
       CustomSnackbar.showError(
         // ignore: use_build_context_synchronously
@@ -144,8 +118,6 @@ class _RegisterScreenState extends State<RegisterScreen>
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.of(context).size.height;
-
     return Consumer<AuthProvider>(
       builder: (context, authProvider, child) {
         return Scaffold(
@@ -156,7 +128,7 @@ class _RegisterScreenState extends State<RegisterScreen>
               duration: const Duration(milliseconds: 400),
               curve: Curves.easeOut,
               padding: EdgeInsets.only(
-                top: _keyboardVisible ? 40 : height * 0.08,
+                top: 40,
                 left: 32,
                 right: 32,
               ),
@@ -325,15 +297,5 @@ class _RegisterScreenState extends State<RegisterScreen>
         );
       },
     );
-  }
-}
-
-class LifecycleEventHandler extends WidgetsBindingObserver {
-  final VoidCallback onMetricsChanged;
-  LifecycleEventHandler({required this.onMetricsChanged});
-
-  @override
-  void didChangeMetrics() {
-    onMetricsChanged();
   }
 }
