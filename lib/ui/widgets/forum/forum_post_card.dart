@@ -44,7 +44,7 @@ class ForumPostCard extends StatelessWidget {
             _buildDescription(),
             if (post.attachment != null) ...[
               const SizedBox(height: 12),
-              _buildAttachment(),
+              _buildEnhancedAttachment(),
             ],
             const SizedBox(height: 12),
             _buildFooter(),
@@ -118,56 +118,230 @@ class ForumPostCard extends StatelessWidget {
     );
   }
 
-  Widget _buildAttachment() {
+  Widget _buildEnhancedAttachment() {
+    final attachment = post.attachment!;
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: _getAttachmentColor().withValues(alpha: 0.1),
+        gradient: LinearGradient(
+          colors: [
+            _getAttachmentColor().withValues(alpha: 0.1),
+            _getAttachmentColor().withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: _getAttachmentColor().withValues(alpha: 0.3)),
+        border: Border.all(
+          color: _getAttachmentColor().withValues(alpha: 0.3),
+          width: 1.5,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: _getAttachmentColor().withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  _getAttachmentIcon(),
+                  color: _getAttachmentColor(),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _getAttachmentTypeLabel(),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      attachment.title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[900],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: _getAttachmentColor(), size: 20),
+            ],
+          ),
+          if (attachment.metadata != null &&
+              attachment.metadata!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _buildAttachmentMetadata(attachment),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAttachmentMetadata(PostAttachment attachment) {
+    final metadata = attachment.metadata!;
+
+    switch (attachment.type) {
+      case PostAttachmentType.roadmap:
+        return _buildRoadmapMetadata(metadata);
+      case PostAttachmentType.test:
+        return _buildTestMetadata(metadata);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildRoadmapMetadata(Map<String, dynamic> metadata) {
+    final level = metadata['level'] as String? ?? 'N/A';
+    final progress = metadata['progress'] as double? ?? 0.0;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: _getAttachmentColor().withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(
-              _getAttachmentIcon(),
-              color: _getAttachmentColor(),
-              size: 20,
+          Expanded(
+            child: _buildMetadataItem(
+              icon: Icons.star_outline,
+              label: 'Nivel',
+              value: level,
+              color: _getLevelColor(level),
             ),
           ),
-          const SizedBox(width: 12),
+          Container(
+            width: 1,
+            height: 30,
+            color: Colors.grey.withValues(alpha: 0.3),
+          ),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getAttachmentTypeLabel(),
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
+            child: _buildMetadataItem(
+              icon: Icons.trending_up,
+              label: 'Progreso',
+              value: '${progress.toInt()}%',
+              color: _getProgressColor(progress),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTestMetadata(Map<String, dynamic> metadata) {
+    final level = metadata['level'] as String? ?? 'N/A';
+    final percentage = metadata['percentage'] as double? ?? 0.0;
+    final correctAnswers = metadata['correctAnswers'] as int? ?? 0;
+    final totalQuestions = metadata['totalQuestions'] as int? ?? 0;
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _buildMetadataItem(
+                  icon: Icons.military_tech,
+                  label: 'Nivel',
+                  value: level,
+                  color: _getLevelColor(level),
                 ),
+              ),
+              Container(
+                width: 1,
+                height: 30,
+                color: Colors.grey.withValues(alpha: 0.3),
+              ),
+              Expanded(
+                child: _buildMetadataItem(
+                  icon: Icons.percent,
+                  label: 'Dominio',
+                  value: '${percentage.toInt()}%',
+                  color: _getProgressColor(percentage),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.check_circle_outline, size: 16, color: Colors.green),
+                const SizedBox(width: 4),
                 Text(
-                  post.attachment!.title,
+                  '$correctAnswers/$totalQuestions respuestas correctas',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
+                    color: Colors.grey[700],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMetadataItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+  }) {
+    return Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: color),
+            const SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 
@@ -225,6 +399,26 @@ class ForumPostCard extends StatelessWidget {
       case PostAttachmentType.none:
         return 'Adjunto';
     }
+  }
+
+  Color _getLevelColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'básico':
+      case 'basico':
+        return Colors.orange;
+      case 'intermedio':
+        return Colors.blue;
+      case 'avanzado':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Color _getProgressColor(double percentage) {
+    if (percentage < 33) return Colors.orange;
+    if (percentage < 66) return Colors.blue;
+    return Colors.green;
   }
 
   String _formatDate(dynamic timestamp) {

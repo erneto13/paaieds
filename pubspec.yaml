@@ -14,6 +14,7 @@ dependencies:
   cloud_firestore: ^6.0.3
   cupertino_icons: ^1.0.8
   equatable: ^2.0.7
+  family_bottom_sheet: ^0.1.0
   firebase_auth: ^6.1.1
   firebase_core: ^4.2.0
   firebase_storage: ^13.0.3

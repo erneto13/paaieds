@@ -1,3 +1,4 @@
+import 'package:family_bottom_sheet/family_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
@@ -55,7 +56,8 @@ class _ForumScreenState extends State<ForumScreen> {
       return;
     }
 
-    await showModalBottomSheet(
+    await FamilyModalSheet.show<void>(
+      contentBackgroundColor: Colors.transparent,
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -235,7 +237,7 @@ class _ForumScreenState extends State<ForumScreen> {
       onPressed: _showCreatePostModal,
       style: ElevatedButton.styleFrom(
         backgroundColor: AppColors.backgroundButtom,
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
       icon: const Icon(Icons.add, color: Colors.white),

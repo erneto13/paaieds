@@ -22,6 +22,13 @@ class ForumPostDetailScreen extends StatefulWidget {
 class _ForumPostDetailScreenState extends State<ForumPostDetailScreen> {
   final TextEditingController _replyController = TextEditingController();
   bool _isSubmitting = false;
+  late ForumProvider _forumProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _forumProvider = Provider.of<ForumProvider>(context, listen: false);
+  }
 
   @override
   void initState() {
@@ -117,8 +124,7 @@ class _ForumPostDetailScreenState extends State<ForumPostDetailScreen> {
   @override
   void dispose() {
     _replyController.dispose();
-    final forumProvider = Provider.of<ForumProvider>(context, listen: false);
-    forumProvider.clearCurrentPost();
+    _forumProvider.clearCurrentPost();
     super.dispose();
   }
 
