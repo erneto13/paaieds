@@ -26,7 +26,7 @@ class RoadmapCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           margin: const EdgeInsets.only(bottom: 5),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
@@ -48,7 +48,7 @@ class RoadmapCard extends StatelessWidget {
                 level: roadmap.level,
                 totalSections: roadmap.totalSections,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               RoadmapProgress(
                 completedSections: roadmap.completedSections,
                 totalSections: roadmap.totalSections,
