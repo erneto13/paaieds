@@ -26,8 +26,6 @@ class AuthService {
       final user = userCredential.user;
       if (user == null) throw Exception('Error al crear el usuario');
 
-      await user.updateDisplayName('$firstName $lastName');
-
       final userModel = UserModel(
         uid: user.uid,
         email: email,
