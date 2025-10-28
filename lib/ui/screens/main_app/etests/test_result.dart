@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
+import 'package:paaieds/core/providers/roadmap_provider.dart';
+import 'package:paaieds/core/providers/test_provider.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
 import 'package:paaieds/util/string_formatter.dart';
+import 'package:provider/provider.dart';
 
 class TestResultsScreen extends StatefulWidget {
   final String topic;
@@ -23,15 +26,66 @@ class TestResultsScreen extends StatefulWidget {
 
 class _TestResultsScreenState extends State<TestResultsScreen> {
   bool _isLoading = false;
+  bool _roadmapGenerated = false;
 
   Future<void> _handleGenerateRoadmap() async {
+    if (_roadmapGenerated) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('El roadmap ya fue generado'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
       await Future.delayed(const Duration(milliseconds: 600));
       widget.onGenerateRoadmap();
+
+      if (mounted) {
+        setState(() => _roadmapGenerated = true);
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
+  }
+
+  Future<bool> _onWillPop() async {
+    final testProvider = Provider.of<TestProvider>(context, listen: false);
+    final roadmapProvider = Provider.of<RoadmapProvider>(
+      context,
+      listen: false,
+    );
+
+    if (_roadmapGenerated) {
+      testProvider.reset();
+      roadmapProvider.clearError();
+      return true;
+    }
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierColor: Colors.black26,
+      builder: (context) => MinimalConfirmDialog(
+        title: 'Salir del diagnóstico',
+        content:
+            '¿Deseas salir sin generar tu roadmap? Los resultados se guardarán.',
+        onConfirm: () {
+          Navigator.of(context).pop(true);
+        },
+      ),
+    );
+
+    if (confirm == true) {
+      testProvider.reset();
+      roadmapProvider.clearError();
+    }
+
+    return confirm ?? false;
   }
 
   @override
@@ -41,117 +95,110 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
     final correct = widget.evaluationResults['correctAnswers'] as int;
     final total = widget.evaluationResults['totalQuestions'] as int;
 
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: Colors.white,
-          appBar: CustomAppBar(
-            title: '¡Diagnóstico completado!',
-            isIcon: false,
-            customIcon: Icons.close,
-            onCustomIconTap: _isLoading
-                ? null
-                : () async {
-                    await showDialog(
-                      context: context,
-                      barrierColor: Colors.black26,
-                      builder: (context) => MinimalConfirmDialog(
-                        title: 'Salir del diagnóstico',
-                        content:
-                            '¿Seguro que quieres salir? Tu roadmap no se guardará.',
-                        onConfirm: () {
-                          Navigator.of(context).pop();
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                    );
-                  },
-          ),
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        children: [
-                          FadeInDown(
-                            duration: const Duration(milliseconds: 400),
-                            child: _buildSuccessIcon(),
-                          ),
-                          const SizedBox(height: 24),
-                          FadeInDown(
-                            duration: const Duration(milliseconds: 500),
-                            child: Text(
-                              '¡Diagnóstico Completado!',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent,
-                              ),
-                              textAlign: TextAlign.center,
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Stack(
+        children: [
+          Scaffold(
+            backgroundColor: Colors.white,
+            appBar: CustomAppBar(
+              title: '¡Diagnóstico completado!',
+              isIcon: false,
+              customIcon: Icons.close,
+              onCustomIconTap: _isLoading
+                  ? null
+                  : () async {
+                      final shouldPop = await _onWillPop();
+                      if (shouldPop && mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    },
+            ),
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: [
+                            FadeInDown(
+                              duration: const Duration(milliseconds: 400),
+                              child: _buildSuccessIcon(),
                             ),
-                          ),
-                          const SizedBox(height: 12),
-                          FadeInDown(
-                            duration: const Duration(milliseconds: 600),
-                            child: Text(
-                              widget.topic.toTitleCase(),
-                              style: TextStyle(
-                                fontSize: 18,
-                                color: Colors.grey[700],
+                            const SizedBox(height: 24),
+                            FadeInDown(
+                              duration: const Duration(milliseconds: 500),
+                              child: Text(
+                                '¡Diagnóstico Completado!',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blueAccent,
+                                ),
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                          ),
-                          const SizedBox(height: 40),
-                          FadeInUp(
-                            duration: const Duration(milliseconds: 700),
-                            child: _buildLevelCard(level, percentage),
-                          ),
-                          const SizedBox(height: 24),
-                          FadeInUp(
-                            duration: const Duration(milliseconds: 800),
-                            child: _buildStatsCard(correct, total),
-                          ),
-                          const SizedBox(height: 24),
-                          FadeInUp(
-                            duration: const Duration(milliseconds: 900),
-                            child: _buildRecommendationCard(level),
-                          ),
-                        ],
+                            const SizedBox(height: 12),
+                            FadeInDown(
+                              duration: const Duration(milliseconds: 600),
+                              child: Text(
+                                widget.topic.toTitleCase(),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey[700],
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 40),
+                            FadeInUp(
+                              duration: const Duration(milliseconds: 700),
+                              child: _buildLevelCard(level, percentage),
+                            ),
+                            const SizedBox(height: 24),
+                            FadeInUp(
+                              duration: const Duration(milliseconds: 800),
+                              child: _buildStatsCard(correct, total),
+                            ),
+                            const SizedBox(height: 24),
+                            FadeInUp(
+                              duration: const Duration(milliseconds: 900),
+                              child: _buildRecommendationCard(level),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  FadeInUp(
-                    duration: const Duration(milliseconds: 1000),
-                    child: _buildGenerateButton(),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        if (_isLoading)
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withValues(alpha: 0.4),
-              child: Center(
-                child: FadeIn(
-                  duration: const Duration(milliseconds: 300),
-                  child: const SpinKitRing(
-                    color: Colors.white,
-                    size: 70,
-                    lineWidth: 6,
-                  ),
+                    const SizedBox(height: 16),
+                    FadeInUp(
+                      duration: const Duration(milliseconds: 1000),
+                      child: _buildGenerateButton(),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-      ],
+
+          if (_isLoading)
+            Positioned.fill(
+              child: Container(
+                color: Colors.black.withValues(alpha: 0.4),
+                child: Center(
+                  child: FadeIn(
+                    duration: const Duration(milliseconds: 300),
+                    child: const SpinKitRing(
+                      color: Colors.white,
+                      size: 70,
+                      lineWidth: 6,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -342,19 +389,24 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
       width: double.infinity,
       height: 54,
       child: ElevatedButton.icon(
-        onPressed: _isLoading ? null : _handleGenerateRoadmap,
+        onPressed: (_isLoading || _roadmapGenerated)
+            ? null
+            : _handleGenerateRoadmap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blueAccent,
+          backgroundColor: _roadmapGenerated ? Colors.grey : Colors.blueAccent,
           elevation: 4,
           shadowColor: Colors.blueAccent.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        icon: const Icon(Icons.map, color: Colors.white),
-        label: const Text(
-          'Generar Mi Roadmap',
-          style: TextStyle(
+        icon: Icon(
+          _roadmapGenerated ? Icons.check : Icons.map,
+          color: Colors.white,
+        ),
+        label: Text(
+          _roadmapGenerated ? 'Roadmap Generado' : 'Generar Mi Roadmap',
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 16,

@@ -118,7 +118,7 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
           uid: userId,
           topicName: _currentTopic!,
           evaluationResults: _evaluationResults!,
-          questionsData: responses, 
+          questionsData: responses,
         );
       }
 
@@ -131,6 +131,12 @@ No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el
       notifyListeners();
       return false;
     }
+  }
+
+  //limpia las respuestas seleccionadas
+  void clearAnswers() {
+    _selectedAnswers.clear();
+    notifyListeners();
   }
 
   //reinicia el estado del provider para un nuevo test

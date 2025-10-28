@@ -30,7 +30,6 @@ class TestScreen extends StatelessWidget {
       return;
     }
 
-    //evaluar usando el uid del usuario actual
     final userId = authProvider.currentUser?.uid ?? '';
     final success = await testProvider.evaluateTest(userId);
 
@@ -82,9 +81,11 @@ class TestScreen extends StatelessWidget {
               if (!context.mounted) return;
 
               if (success) {
-                Navigator.push(
-                  context,
+                testProvider.reset();
+
+                Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const RoadmapScreen()),
+                  (route) => route.isFirst,
                 );
               } else {
                 CustomSnackbar.showError(
@@ -113,106 +114,126 @@ class TestScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<TestProvider>(
       builder: (context, testProvider, child) {
-        return Scaffold(
-          appBar: CustomAppBar(
-            title:
-                'Test: ${testProvider.currentTopic?.toTitleCase() ?? "Test"}',
-            isIcon: false,
-            customIcon: Icons.close,
-            onCustomIconTap: () async {
-              await showDialog(
-                context: context,
-                barrierColor: Colors.black26,
-                builder: (context) => MinimalConfirmDialog(
-                  title: 'Salir del test',
-                  content:
-                      '¿Seguro que quieres salir? Se perderán tus respuestas.',
-                  onConfirm: () {
-                    //limpiar el estado del test al salir
-                    testProvider.reset();
-                    Navigator.pop(context);
-                    Navigator.pop(context);
-                  },
-                ),
-              );
-            },
-          ),
-          backgroundColor: Colors.white10,
-          body: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: testProvider.questions.length,
-                      itemBuilder: (context, index) {
-                        final q = testProvider.questions[index];
-                        return QuestionCard(
-                          question: q,
-                          index: index,
-                          onAnswerSelected: (answer) {
-                            //registrar la respuesta en el provider
-                            testProvider.selectAnswer(index, answer);
-                          },
-                        );
-                      },
-                    ),
+        return WillPopScope(
+          onWillPop: () async {
+            final confirm = await showDialog<bool>(
+              context: context,
+              barrierColor: Colors.black26,
+              builder: (context) => MinimalConfirmDialog(
+                title: 'Salir del test',
+                content:
+                    '¿Seguro que quieres salir? Se perderán tus respuestas.',
+                onConfirm: () {
+                  // ✅ Limpiar estado al salir
+                  testProvider.reset();
+                  Navigator.pop(context, true);
+                },
+              ),
+            );
+            return confirm ?? false;
+          },
+          child: Scaffold(
+            appBar: CustomAppBar(
+              title:
+                  'Test: ${testProvider.currentTopic?.toTitleCase() ?? "Test"}',
+              isIcon: false,
+              customIcon: Icons.close,
+              onCustomIconTap: () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  barrierColor: Colors.black26,
+                  builder: (context) => MinimalConfirmDialog(
+                    title: 'Salir del test',
+                    content:
+                        '¿Seguro que quieres salir? Se perderán tus respuestas.',
+                    onConfirm: () {
+                      testProvider.reset();
+                      Navigator.pop(context, true);
+                    },
                   ),
-                  const SizedBox(height: 8),
-                  AnimatedOpacity(
-                    duration: const Duration(milliseconds: 300),
-                    opacity: testProvider.allAnswered ? 1.0 : 0.4,
-                    child: SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed:
-                            testProvider.allAnswered && !testProvider.isLoading
-                            ? () => _handleSubmit(context)
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          disabledBackgroundColor: AppColors.lightBlue
-                              .withValues(alpha: 0.5),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: testProvider.isLoading
-                            ? Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: SpinKitCircle(
-                                      color: AppColors.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Text(
-                                    "Evaluando...",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ],
-                              )
-                            : Text(
-                                "Enviar respuestas",
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
+                );
+                if (confirm == true && context.mounted) {
+                  Navigator.pop(context);
+                }
+              },
+            ),
+            backgroundColor: Colors.white10,
+            body: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: testProvider.questions.length,
+                        itemBuilder: (context, index) {
+                          final q = testProvider.questions[index];
+                          return QuestionCard(
+                            question: q,
+                            index: index,
+                            onAnswerSelected: (answer) {
+                              testProvider.selectAnswer(index, answer);
+                            },
+                          );
+                        },
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    AnimatedOpacity(
+                      duration: const Duration(milliseconds: 300),
+                      opacity: testProvider.allAnswered ? 1.0 : 0.4,
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton(
+                          onPressed:
+                              testProvider.allAnswered &&
+                                  !testProvider.isLoading
+                              ? () => _handleSubmit(context)
+                              : null,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            disabledBackgroundColor: AppColors.lightBlue
+                                .withValues(alpha: 0.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: testProvider.isLoading
+                              ? Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: SpinKitCircle(
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      "Evaluando...",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              : Text(
+                                  "Enviar respuestas",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

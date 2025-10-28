@@ -60,6 +60,10 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
     }
 
     final testProvider = Provider.of<TestProvider>(context, listen: false);
+
+    // ✅ IMPORTANTE: Limpiar estado previo antes de generar nuevo test
+    testProvider.reset();
+
     final success = await testProvider.generateTest(topic);
 
     if (!mounted) return;
@@ -82,6 +86,26 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
     }
   }
 
+  void _startTest() {
+    final testProvider = Provider.of<TestProvider>(context, listen: false);
+
+    if (testProvider.questions.isEmpty) {
+      CustomSnackbar.showError(
+        context: context,
+        message: 'No hay test generado',
+        description: 'Genera un test primero.',
+      );
+      return;
+    }
+
+    testProvider.clearAnswers();
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const TestScreen()),
+    );
+  }
+
   void _scrollToPreview() {
     Future.delayed(const Duration(milliseconds: 500), () {
       if (_scrollController.hasClients) {
@@ -92,13 +116,6 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
         );
       }
     });
-  }
-
-  void _startTest() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const TestScreen()),
-    );
   }
 
   @override
