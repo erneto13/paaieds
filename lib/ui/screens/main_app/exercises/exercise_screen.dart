@@ -15,6 +15,7 @@ import 'package:paaieds/ui/widgets/roadmap/roadmap_custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/roadmap/roadmap_sumary_section.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/util/snackbar.dart';
+import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 
 class ExerciseScreen extends StatefulWidget {
@@ -245,7 +246,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       child: Scaffold(
         appBar: RoadmapAppBar(
           topic: widget.section.bloomLevel,
-          subtopic: widget.section.subtopic,
+          subtopic: widget.section.bloomLevel.getBloomDescription(),
           lives: 3,
           onClose: () async {
             final confirm = await showDialog<bool>(

@@ -25,7 +25,7 @@ class RoadmapCard extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          margin: const EdgeInsets.only(bottom: 16),
+          margin: const EdgeInsets.only(bottom: 5),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,

@@ -27,14 +27,14 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         child: Container(
-          // Eliminamos la altura fija para que se adapte
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
+                // color: Colors.red,
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -43,7 +43,6 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Contenedor de texto
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,27 +56,17 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
                         color: Colors.black87,
                       ),
                       maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 2),
-                    // Mostrar level o subtopic
                     if (level != null)
                       Text(
                         level!,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: Colors.grey,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     if (subtopic != null)
                       Text(
                         subtopic!,
-                        style: const TextStyle(
-                          fontSize: 6,
-                          color: Colors.grey,
-                        ),
-                        softWrap: true,
+                        style: const TextStyle(fontSize: 12, color: Colors.grey),
+                        maxLines: 1,
                       ),
                   ],
                 ),
@@ -85,7 +74,6 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
 
               const SizedBox(width: 12),
 
-              // Indicador de secciones completadas
               if (completedSections != null && totalSections != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -93,10 +81,10 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.lightBlue.withOpacity(0.2),
+                    color: AppColors.lightBlue.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.lightBlue.withOpacity(0.4),
+                      color: AppColors.lightBlue.withValues(alpha: 0.4),
                     ),
                   ),
                   child: Row(
@@ -122,7 +110,6 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
               if (completedSections != null && totalSections != null)
                 const SizedBox(width: 12),
 
-              // Vidas
               if (lives != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -130,9 +117,11 @@ class RoadmapAppBar extends StatelessWidget implements PreferredSizeWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.red.withOpacity(0.2),
+                    color: Colors.red.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.red.withOpacity(0.4)),
+                    border: Border.all(
+                      color: Colors.red.withValues(alpha: 0.4),
+                    ),
                   ),
                   child: Row(
                     children: [

@@ -114,7 +114,6 @@ Importante:
 - Devuelve SOLO el objeto JSON, sin texto adicional.
 Ejemplo de estructura:
 
-Traducción realizada con la versión gratuita del traductor DeepL.com
 {
   "secciones": [
     {
