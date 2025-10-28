@@ -19,29 +19,15 @@ class CodeExercise extends StatefulWidget {
 }
 
 class _CodeExerciseState extends State<CodeExercise> {
-  late TextEditingController _codeController;
+  String? _selectedOption;
   bool _showHints = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final initialCode = widget.exercise.data['initialCode'] as String? ?? '';
-    _codeController = TextEditingController(text: initialCode);
-  }
-
-  @override
-  void dispose() {
-    _codeController.dispose();
-    super.dispose();
-  }
-
-  void _onSubmit() {
-    widget.onAnswer(_codeController.text);
-  }
 
   @override
   Widget build(BuildContext context) {
     final hints = widget.exercise.data['hints'] as List<dynamic>? ?? [];
+    final codeSnippet = widget.exercise.data['codeSnippet'] as String? ?? '';
+    final outputOptions =
+        widget.exercise.data['outputOptions'] as List<dynamic>? ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -49,7 +35,16 @@ class _CodeExerciseState extends State<CodeExercise> {
         _buildStatement(),
         const SizedBox(height: 24),
 
-        _buildCodeEditor(),
+        if (codeSnippet.isNotEmpty) ...[
+          _buildCodeSnippet(codeSnippet),
+          const SizedBox(height: 24),
+        ],
+
+        _buildOutputOptionsTitle(),
+        const SizedBox(height: 12),
+
+        ...outputOptions.map((option) => _buildOutputOption(option.toString())),
+
         const SizedBox(height: 16),
 
         if (hints.isNotEmpty) ...[
@@ -57,7 +52,7 @@ class _CodeExerciseState extends State<CodeExercise> {
           const SizedBox(height: 16),
         ],
 
-        _buildActionButtons(),
+        _buildSubmitButton(),
       ],
     );
   }
@@ -103,7 +98,7 @@ class _CodeExerciseState extends State<CodeExercise> {
     );
   }
 
-  Widget _buildCodeEditor() {
+  Widget _buildCodeSnippet(String code) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -112,7 +107,7 @@ class _CodeExerciseState extends State<CodeExercise> {
             Icon(Icons.terminal, color: AppColors.primary, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Editor de código',
+              'Código a analizar',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -133,7 +128,7 @@ class _CodeExerciseState extends State<CodeExercise> {
           ),
           child: Column(
             children: [
-              // Header del editor
+              //header del editor
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -175,7 +170,7 @@ class _CodeExerciseState extends State<CodeExercise> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'solution.dart',
+                      'code.dart',
                       style: TextStyle(
                         color: Colors.grey[400],
                         fontSize: 13,
@@ -186,50 +181,106 @@ class _CodeExerciseState extends State<CodeExercise> {
                 ),
               ),
 
-              // Área de código
-              TextField(
-                controller: _codeController,
-                enabled: !widget.isAnswered,
-                maxLines: 12,
-                style: const TextStyle(
-                  color: Color(0xFFD4D4D4),
-                  fontSize: 14,
-                  fontFamily: 'monospace',
-                  height: 1.5,
-                ),
-                decoration: InputDecoration(
-                  hintText: '// Escribe tu código aquí...',
-                  hintStyle: TextStyle(
-                    color: Colors.grey[600],
-                    fontStyle: FontStyle.italic,
+              //area de codigo
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                child: SelectableText(
+                  code,
+                  style: const TextStyle(
+                    color: Color(0xFFD4D4D4),
+                    fontSize: 14,
+                    fontFamily: 'monospace',
+                    height: 1.5,
                   ),
-                  filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
-                  contentPadding: const EdgeInsets.all(16),
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
                 ),
               ),
             ],
           ),
         ),
+      ],
+    );
+  }
 
-        // Contador de líneas
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+  Widget _buildOutputOptionsTitle() {
+    return Row(
+      children: [
+        Icon(Icons.output, color: AppColors.primary, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          '¿Cuál será la salida de este código?',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[800],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOutputOption(String option) {
+    final isSelected = _selectedOption == option;
+    final isDisabled = widget.isAnswered;
+
+    return GestureDetector(
+      onTap: isDisabled
+          ? null
+          : () {
+              setState(() => _selectedOption = option);
+            },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? AppColors.backgroundButtom.withValues(alpha: 0.1)
+              : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected
+                ? AppColors.backgroundButtom
+                : Colors.grey.withValues(alpha: 0.3),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
           children: [
-            Icon(Icons.format_list_numbered, size: 14, color: Colors.grey[500]),
-            const SizedBox(width: 4),
-            Text(
-              '${_codeController.text.split('\n').length} líneas',
-              style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? AppColors.backgroundButtom
+                      : Colors.grey.withValues(alpha: 0.5),
+                  width: 2,
+                ),
+                color: isSelected
+                    ? AppColors.backgroundButtom
+                    : Colors.transparent,
+              ),
+              child: isSelected
+                  ? const Icon(Icons.check, size: 16, color: Colors.white)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                option,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  color: isSelected ? AppColors.deepBlue : Colors.grey[700],
+                  fontFamily: 'monospace',
+                ),
+              ),
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 
@@ -330,51 +381,30 @@ class _CodeExerciseState extends State<CodeExercise> {
     );
   }
 
-  Widget _buildActionButtons() {
-    final canSubmit =
-        _codeController.text.trim().isNotEmpty && !widget.isAnswered;
+  Widget _buildSubmitButton() {
+    final canSubmit = _selectedOption != null && !widget.isAnswered;
 
-    return Row(
-      children: [
-        Expanded(
-          child: OutlinedButton.icon(
-            onPressed: widget.isAnswered
-                ? null
-                : () {
-                    setState(() => _codeController.clear());
-                  },
-            icon: const Icon(Icons.delete_outline),
-            label: const Text('Limpiar'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey[700],
-              side: BorderSide(color: Colors.grey[400]!),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: canSubmit ? () => widget.onAnswer(_selectedOption!) : null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.backgroundButtom,
+          disabledBackgroundColor: Colors.grey[300],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: ElevatedButton.icon(
-            onPressed: canSubmit ? _onSubmit : null,
-            icon: const Icon(Icons.play_arrow),
-            label: const Text('Ejecutar y Verificar'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.backgroundButtom,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey[300],
-              disabledForegroundColor: Colors.grey[500],
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+        child: Text(
+          'Verificar Respuesta',
+          style: TextStyle(
+            color: canSubmit ? Colors.white : Colors.grey[500],
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
           ),
         ),
-      ],
+      ),
     );
   }
 }
