@@ -96,42 +96,14 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
   }
 
   Widget _buildStatement() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundButtom.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.backgroundButtom.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundButtom.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.reorder,
-              color: AppColors.backgroundButtom,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              widget.exercise.statement,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
+    return Text(
+      widget.exercise.statement,
+      textAlign: TextAlign.justify,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: Colors.grey[900],
+        height: 1.4,
       ),
     );
   }

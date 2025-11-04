@@ -25,6 +25,18 @@ class _MatchingExerciseState extends State<MatchingExercise> {
   final Map<String, String> _userMatches = {};
   String? _selectedLeft;
 
+  //colores unicos para cada match
+  final List<Color> _matchColors = [
+    Colors.purple,
+    Colors.indigo,
+    Colors.teal,
+    Colors.pink,
+    Colors.orange,
+    Colors.deepOrange,
+    Colors.cyan,
+    Colors.lime,
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +52,17 @@ class _MatchingExerciseState extends State<MatchingExercise> {
         print('Error al cargar respuesta anterior: $e');
       }
     }
+  }
+
+  Color? _getMatchColor(String leftItem) {
+    if (!_userMatches.containsKey(leftItem)) return null;
+
+    final leftColumn =
+        widget.exercise.data['leftColumn'] as List<dynamic>? ?? [];
+    final index = leftColumn.indexOf(leftItem);
+
+    if (index == -1) return null;
+    return _matchColors[index % _matchColors.length];
   }
 
   @override
@@ -74,42 +97,14 @@ class _MatchingExerciseState extends State<MatchingExercise> {
   }
 
   Widget _buildStatement() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundButtom.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.backgroundButtom.withValues(alpha: 0.2),
-        ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundButtom.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              Icons.swap_horiz,
-              color: AppColors.backgroundButtom,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              widget.exercise.statement,
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
+    return Text(
+      widget.exercise.statement,
+      textAlign: TextAlign.justify,
+      style: TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.bold,
+        color: Colors.grey[900],
+        height: 1.4,
       ),
     );
   }
@@ -169,6 +164,7 @@ class _MatchingExerciseState extends State<MatchingExercise> {
     final isSelected = _selectedLeft == item;
     final isMatched = _userMatches.containsKey(item);
     final isDisabled = widget.isAnswered;
+    final matchColor = _getMatchColor(item);
 
     return GestureDetector(
       onTap: isDisabled
@@ -187,14 +183,14 @@ class _MatchingExerciseState extends State<MatchingExercise> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isMatched
-              ? Colors.green.withValues(alpha: 0.1)
+              ? matchColor!.withValues(alpha: 0.1)
               : isSelected
               ? AppColors.backgroundButtom.withValues(alpha: 0.1)
               : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: isMatched
-                ? Colors.green
+                ? matchColor!
                 : isSelected
                 ? AppColors.backgroundButtom
                 : Colors.grey.withValues(alpha: 0.3),
@@ -209,7 +205,7 @@ class _MatchingExerciseState extends State<MatchingExercise> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isMatched
-                    ? Colors.green
+                    ? matchColor
                     : isSelected
                     ? AppColors.backgroundButtom
                     : Colors.grey.withValues(alpha: 0.2),
@@ -276,6 +272,7 @@ class _MatchingExerciseState extends State<MatchingExercise> {
 
     final isMatched = matchedWith != null;
     final isDisabled = widget.isAnswered;
+    final matchColor = isMatched ? _getMatchColor(matchedWith) : null;
 
     return GestureDetector(
       onTap: isDisabled || _selectedLeft == null
@@ -291,15 +288,13 @@ class _MatchingExerciseState extends State<MatchingExercise> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isMatched
-              ? Colors.green.withValues(alpha: 0.1)
+              ? matchColor!.withValues(alpha: 0.1)
               : _selectedLeft != null
               ? AppColors.backgroundButtom.withValues(alpha: 0.05)
               : Colors.white,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isMatched
-                ? Colors.green
-                : Colors.grey.withValues(alpha: 0.3),
+            color: isMatched ? matchColor! : Colors.grey.withValues(alpha: 0.3),
             width: isMatched ? 2 : 1,
           ),
         ),
@@ -311,7 +306,7 @@ class _MatchingExerciseState extends State<MatchingExercise> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: isMatched
-                    ? Colors.green
+                    ? matchColor
                     : Colors.grey.withValues(alpha: 0.2),
               ),
               child: Center(

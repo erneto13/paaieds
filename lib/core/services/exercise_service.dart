@@ -133,6 +133,9 @@ $exerciseTypes
 - Incluye retroalimentación educativa
 - Asegúrate de que los ejercicios sean claros y verificables
 - Devuelve SOLO el JSON, sin texto adicional
+- No incluyas markdown ni formato especial
+- No agregues explicaciones fuera del JSON
+- No agregues ejercicios de codificación si el tema no es de programación
 
 Genera los ejercicios ahora. No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
 ''';
@@ -140,10 +143,12 @@ Genera los ejercicios ahora. No agregues texto adicional fuera del JSON. La resp
 
   String _getProgrammingExerciseTypes() {
     return '''
-**Tipos de ejercicios a incluir**:
-1. **multiple_choice**: Preguntas con 4 opciones, una correcta.
-2. **block_order**: Ordenar líneas de código o pasos de un algoritmo en el orden correcto.
-3. **code**: Analizar un fragmento de código y seleccionar cuál será su salida/resultado.
+Tipos de ejercicios a incluir:
+1. multiple_choice: Preguntas con 4 opciones, una correcta.
+2. block_order: Ordenar líneas de código o pasos de un algoritmo en el orden correcto.
+3. code: Analizar un fragmento de código y seleccionar cuál será su salida/resultado.
+
+**IMPORTANTE**: No agregues los code snippets en el statement.
 
 **Estructura JSON esperada**:
 {
