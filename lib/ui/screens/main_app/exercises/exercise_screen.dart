@@ -121,6 +121,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             Navigator.pop(context);
             _loadExercises();
           },
+          onCancel: () {
+            Navigator.pop(context);
+            Navigator.pop(context);
+          },
         ),
       ),
     );

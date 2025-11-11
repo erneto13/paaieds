@@ -92,6 +92,7 @@ class ForumService {
 
       return docRef.id;
     } catch (e) {
+      print(e);
       return null;
     }
   }

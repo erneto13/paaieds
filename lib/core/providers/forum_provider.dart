@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:paaieds/core/models/forum_post.dart';
 import 'package:paaieds/core/models/forum_reply.dart';
 import 'package:paaieds/core/services/forum_service.dart';
@@ -36,13 +36,17 @@ class ForumProvider extends ChangeNotifier {
         _posts = posts;
         _isLoading = false;
         _errorMessage = null;
-        notifyListeners();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
       },
       onError: (error) {
         _errorMessage = 'Error al cargar posts: $error';
         _posts = [];
         _isLoading = false;
-        notifyListeners();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          notifyListeners();
+        });
       },
     );
   }
@@ -104,18 +108,25 @@ class ForumProvider extends ChangeNotifier {
 
       _currentPost = post;
 
-      //cargar respuestas
-      _repliesSubscription?.cancel();
+      //cancel previous subscription if exists
+      await _repliesSubscription?.cancel();
+
+      //load replies with stream
       _repliesSubscription = _forumService
           .getRepliesStream(postId)
           .listen(
             (replies) {
               _currentPostReplies = replies;
-              notifyListeners();
+              //use post frame callback to avoid setState during build
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                notifyListeners();
+              });
             },
             onError: (error) {
               _errorMessage = 'Error al cargar respuestas: $error';
-              notifyListeners();
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                notifyListeners();
+              });
             },
           );
 
@@ -164,14 +175,19 @@ class ForumProvider extends ChangeNotifier {
       final success = await _forumService.deletePost(postId);
 
       if (success) {
-        _posts.removeWhere((p) => p.id == postId);
-        notifyListeners();
+        //use post frame callback to avoid setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _posts.removeWhere((p) => p.id == postId);
+          notifyListeners();
+        });
       }
 
       return success;
     } catch (e) {
       _errorMessage = 'Error al eliminar post: $e';
-      notifyListeners();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
       return false;
     }
   }
@@ -182,14 +198,19 @@ class ForumProvider extends ChangeNotifier {
       final success = await _forumService.deleteReply(replyId, postId);
 
       if (success) {
-        _currentPostReplies.removeWhere((r) => r.id == replyId);
-        notifyListeners();
+        //use post frame callback to avoid setState during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _currentPostReplies.removeWhere((r) => r.id == replyId);
+          notifyListeners();
+        });
       }
 
       return success;
     } catch (e) {
       _errorMessage = 'Error al eliminar respuesta: $e';
-      notifyListeners();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        notifyListeners();
+      });
       return false;
     }
   }

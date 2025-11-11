@@ -10,12 +10,14 @@ class TheoryScreen extends StatefulWidget {
   final RoadmapSection section;
   final TheoryContent theoryContent;
   final VoidCallback onContinue;
+  final VoidCallback? onCancel;
 
   const TheoryScreen({
     super.key,
     required this.section,
     required this.theoryContent,
     required this.onContinue,
+    this.onCancel,
   });
 
   @override

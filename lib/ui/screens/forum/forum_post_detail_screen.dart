@@ -6,6 +6,7 @@ import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/forum_provider.dart';
 import 'package:paaieds/ui/widgets/forum/forum_reply_card.dart';
+import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
 import 'package:paaieds/ui/widgets/util/snackbar.dart';
 import 'package:provider/provider.dart';
@@ -79,9 +80,9 @@ class _ForumPostDetailScreenState extends State<ForumPostDetailScreen> {
       content: content,
     );
 
-    setState(() => _isSubmitting = false);
-
     if (!mounted) return;
+
+    setState(() => _isSubmitting = false);
 
     if (success) {
       _replyController.clear();
@@ -101,6 +102,17 @@ class _ForumPostDetailScreenState extends State<ForumPostDetailScreen> {
   }
 
   Future<void> _deleteReply(String replyId) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => MinimalConfirmDialog(
+        title: 'Eliminar respuesta',
+        content: '¿Estás seguro de que deseas eliminar esta respuesta?',
+        onConfirm: () => Navigator.pop(context, true),
+      ),
+    );
+
+    if (confirm != true) return;
+
     final forumProvider = Provider.of<ForumProvider>(context, listen: false);
     final success = await forumProvider.deleteReply(replyId, widget.postId);
 
