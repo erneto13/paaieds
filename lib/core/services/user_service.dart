@@ -465,14 +465,12 @@ class UserService {
           .get();
 
       if (!doc.exists || doc.data() == null) {
-        print('No se encontró progreso guardado para sección: $sectionId');
         return null;
       }
 
       final data = doc.data()!;
 
       if (!data.containsKey('sectionId') || !data.containsKey('attempts')) {
-        print('Datos de progreso incompletos');
         return null;
       }
 
@@ -496,7 +494,6 @@ class UserService {
         isCompleted: data['isCompleted'] ?? false,
       );
     } catch (e) {
-      print('No se pudo obtener progreso (probablemente primera vez): $e');
       return null;
     }
   }
@@ -518,23 +515,18 @@ class UserService {
           .get();
 
       if (!doc.exists || doc.data() == null) {
-        print(
-          'No se encontraron ejercicios guardados para sección: $sectionId',
-        );
         return null;
       }
 
       final data = doc.data()!;
 
       if (!data.containsKey('exercises')) {
-        print('Documento existe pero no contiene ejercicios');
         return null;
       }
 
       final exercisesData = data['exercises'] as List<dynamic>? ?? [];
 
       if (exercisesData.isEmpty) {
-        print('La lista de ejercicios está vacía');
         return null;
       }
 
@@ -542,61 +534,47 @@ class UserService {
           .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print(
-        'No se pudieron obtener ejercicios (probablemente primera vez): $e',
-      );
       return null;
     }
   }
 
   //guarda los ejercicios de una seccion especifica en un roadmap
-Future<bool> saveSectionExercises({
-  required String uid,
-  required String roadmapId,
-  required String sectionId,
-  required List<Exercise> exercises,
-}) async {
-  try {
-    //valida que los parametros no esten vacios
-    if (uid.isEmpty || roadmapId.isEmpty || sectionId.isEmpty) {
-      print('❌ Parámetros vacíos en saveSectionExercises');
-      print('   uid: "${uid.isEmpty ? "VACÍO" : uid}"');
-      print('   roadmapId: "${roadmapId.isEmpty ? "VACÍO" : roadmapId}"');
-      print('   sectionId: "${sectionId.isEmpty ? "VACÍO" : sectionId}"');
+  Future<bool> saveSectionExercises({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+    required List<Exercise> exercises,
+  }) async {
+    try {
+      //valida que los parametros no esten vacios
+      if (uid.isEmpty || roadmapId.isEmpty || sectionId.isEmpty) {
+        return false;
+      }
+
+      if (exercises.isEmpty) {
+        return false;
+      }
+
+      final exercisesData = exercises.map((e) => e.toJson()).toList();
+
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .collection('exercises')
+          .doc(sectionId)
+          .set({
+            'sectionId': sectionId,
+            'exercises': exercisesData,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      return true;
+    } catch (e) {
       return false;
     }
-
-    if (exercises.isEmpty) {
-      print('⚠️ Lista de ejercicios vacía');
-      return false;
-    }
-
-    print('💾 Guardando ${exercises.length} ejercicios en Firestore...');
-    print('   Path: users/$uid/roadmaps/$roadmapId/exercises/$sectionId');
-
-    final exercisesData = exercises.map((e) => e.toJson()).toList();
-
-    await _firestore
-        .collection('users')
-        .doc(uid)
-        .collection('roadmaps')
-        .doc(roadmapId)
-        .collection('exercises')
-        .doc(sectionId)
-        .set({
-          'sectionId': sectionId,
-          'exercises': exercisesData,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-    print('✅ Ejercicios guardados exitosamente en Firestore');
-    return true;
-  } catch (e) {
-    print('❌ ERROR CRÍTICO en saveSectionExercises: $e');
-    print('   Stack trace: ${StackTrace.current}');
-    return false;
   }
-}
 
   //actualiza una seccion especifica en un roadmap
   Future<bool> updateRoadmapSection({

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/models/exercise.dart';
@@ -57,7 +56,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final userId = authProvider.currentUser?.uid;
     final roadmapId = roadmapProvider.currentRoadmap?.id;
 
-    //validar usuario
     if (userId == null || userId.isEmpty) {
       if (!mounted) return;
       CustomSnackbar.showError(
@@ -69,7 +67,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       return;
     }
 
-    //validar roadmap
     if (roadmapId == null || roadmapId.isEmpty) {
       if (!mounted) return;
       CustomSnackbar.showError(
@@ -166,7 +163,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (!mounted) return;
 
     if (success) {
-      //limpiar el estado del provider antes de volver
       exerciseProvider.reset();
 
       CustomSnackbar.showSuccess(
@@ -175,7 +171,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         description: 'Has avanzado en tu roadmap de aprendizaje.',
       );
 
-      //retornar true para indicar que se completo
       Navigator.pop(context, true);
     } else {
       CustomSnackbar.showError(
@@ -192,7 +187,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       listen: false,
     );
 
-    //identificar conceptos fallidos basados en los ejercicios incorrectos
     exerciseProvider.currentProgress!.attempts
         .where((attempt) => !attempt.isCorrect)
         .toList();
@@ -229,6 +223,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
         final confirm = await showDialog<bool>(
@@ -269,8 +264,30 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         body: Consumer<ExerciseProvider>(
           builder: (context, exerciseProvider, child) {
             if (exerciseProvider.isLoading) {
-              return const Center(
-                child: SpinKitRing(color: AppColors.primary, size: 60),
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    FadeIn(
+                      child: Image.asset(
+                        'assets/sonic.gif',
+                        width: 240,
+                        height: 240,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Cargando ejercicios...',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               );
             }
 
@@ -356,7 +373,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               children: [
                 _buildExerciseWidget(provider),
 
-                //solo mostrar resultado y boton siguiente si NO esta completada
                 if (!provider.isSectionAlreadyCompleted) ...[
                   if (provider.showingResult) ...[
                     const SizedBox(height: 24),
@@ -380,7 +396,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
         child: Column(
           children: [
-            // 🔹 Banner compacto de completado
             Card(
               color: Colors.green[50],
               shape: RoundedRectangleBorder(
@@ -462,10 +477,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               ),
             ),
 
-            // 🔹 Espacio entre el banner y el resumen
             const SizedBox(height: 20),
 
-            // 🔹 Tarjeta de resumen (fuera del banner)
             SectionSummaryCard(
               section: widget.section,
               finalTheta: widget.currentTheta,

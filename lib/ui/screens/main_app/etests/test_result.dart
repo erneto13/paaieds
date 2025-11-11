@@ -1,5 +1,6 @@
+// ignore_for_file: deprecated_member_use
+
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
@@ -175,10 +176,11 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
                 child: Center(
                   child: FadeIn(
                     duration: const Duration(milliseconds: 300),
-                    child: const SpinKitRing(
-                      color: Colors.white,
-                      size: 70,
-                      lineWidth: 6,
+                    child: Image.asset(
+                      'assets/sonic.gif',
+                      width: 180,
+                      height: 180,
+                      fit: BoxFit.contain,
                     ),
                   ),
                 ),
