@@ -2,6 +2,60 @@ import 'dart:convert';
 
 enum ExerciseType { multipleChoice, blockOrder, code, matching }
 
+class TheoryContent {
+  final String introduction;
+  final List<TheorySection> sections;
+  final List<String> keyPoints;
+  final List<String> examples;
+
+  TheoryContent({
+    required this.introduction,
+    required this.sections,
+    required this.keyPoints,
+    required this.examples,
+  });
+
+  factory TheoryContent.fromJson(Map<String, dynamic> json) {
+    return TheoryContent(
+      introduction: json['introduction'] ?? '',
+      sections:
+          (json['sections'] as List<dynamic>?)
+              ?.map((s) => TheorySection.fromJson(s as Map<String, dynamic>))
+              .toList() ??
+          [],
+      keyPoints: List<String>.from(json['keyPoints'] ?? []),
+      examples: List<String>.from(json['examples'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'introduction': introduction,
+      'sections': sections.map((s) => s.toJson()).toList(),
+      'keyPoints': keyPoints,
+      'examples': examples,
+    };
+  }
+}
+
+class TheorySection {
+  final String title;
+  final String content;
+
+  TheorySection({required this.title, required this.content});
+
+  factory TheorySection.fromJson(Map<String, dynamic> json) {
+    return TheorySection(
+      title: json['title'] ?? '',
+      content: json['content'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'title': title, 'content': content};
+  }
+}
+
 class Exercise {
   final String id;
   final ExerciseType type;
@@ -65,11 +119,9 @@ class Exercise {
         return correctOrder?.join('|') ?? '';
 
       case ExerciseType.code:
-        //para ejercicios tipo code, ahora la respuesta correcta es una de las opciones
         return json['correctAnswer'] ?? '';
 
       case ExerciseType.matching:
-        //para matching, guardamos el mapa de relaciones correctas como json
         final correctMatches = json['correctMatches'];
         if (correctMatches != null) {
           return jsonEncode(correctMatches);
@@ -134,6 +186,7 @@ class SectionProgress {
   final int correctCount;
   final int totalAttempts;
   final bool isCompleted;
+  final bool theoryReviewed;
 
   SectionProgress({
     required this.sectionId,
@@ -142,6 +195,7 @@ class SectionProgress {
     required this.correctCount,
     required this.totalAttempts,
     this.isCompleted = false,
+    this.theoryReviewed = false,
   });
 
   double get accuracy => totalAttempts > 0 ? correctCount / totalAttempts : 0.0;
@@ -154,6 +208,7 @@ class SectionProgress {
       'correctCount': correctCount,
       'totalAttempts': totalAttempts,
       'isCompleted': isCompleted,
+      'theoryReviewed': theoryReviewed,
     };
   }
 }
