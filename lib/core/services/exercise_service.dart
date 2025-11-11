@@ -5,7 +5,6 @@ import 'package:paaieds/util/json_parser.dart';
 class ExerciseService {
   final GeminiService _geminiService = GeminiService();
 
-  //detectar si el tema es relacionado a programacion
   bool _isProgrammingTopic(String subtopic, String description) {
     final programmingKeywords = [
       'código',
@@ -43,8 +42,113 @@ class ExerciseService {
 
     final combinedText =
         '${subtopic.toLowerCase()} ${description.toLowerCase()}';
-
     return programmingKeywords.any((keyword) => combinedText.contains(keyword));
+  }
+
+  Future<TheoryContent> generateTheoryContent({
+    required String subtopic,
+    required String description,
+    required List<String> objectives,
+    required double currentTheta,
+  }) async {
+    final prompt = _buildTheoryPrompt(
+      subtopic: subtopic,
+      description: description,
+      objectives: objectives,
+      currentTheta: currentTheta,
+    );
+
+    try {
+      final result = await _geminiService.generateText(prompt);
+
+      final jsonData = JsonParserUtil.parseJsonObject(result);
+
+      if (!jsonData.containsKey('introduction')) {}
+
+      final theoryContent = TheoryContent.fromJson(jsonData);
+
+      return theoryContent;
+    } catch (e) {
+      return TheoryContent(
+        introduction:
+            'En esta sección aprenderás sobre $subtopic. $description',
+        sections: [
+          TheorySection(
+            title: 'Concepto Principal',
+            content:
+                'El tema de $subtopic es fundamental para tu aprendizaje. '
+                'Estudiaremos los aspectos clave y su aplicación práctica.',
+          ),
+        ],
+        keyPoints: objectives,
+        examples: ['Consulta documentación oficial u otros recursos.'],
+      );
+    }
+  }
+
+  String _buildTheoryPrompt({
+    required String subtopic,
+    required String description,
+    required List<String> objectives,
+    required double currentTheta,
+  }) {
+    final difficultyLevel = _getDifficultyLevel(currentTheta);
+
+    return '''
+Genera contenido teórico educativo para el siguiente tema:
+
+**Subtema**: $subtopic
+**Descripción**: $description
+**Nivel del estudiante (θ)**: $currentTheta ($difficultyLevel)
+
+**Objetivos de aprendizaje**:
+${objectives.map((o) => '- $o').join('\n')}
+
+Crea un contenido teórico estructurado que cubra:
+
+1. **Introduction**: Una introducción clara y motivadora del tema (1 párrafo bien explicado)
+2. **Sections**: Entre 2-4 secciones temáticas, cada una con:
+   - title: Título de la sección
+   - content: Explicación detallada del concepto (1-2 párrafos)
+3. **KeyPoints**: 4-6 puntos clave que el estudiante debe recordar
+4. **Examples**: 2-3 ejemplos prácticos concretos
+
+**Consideraciones importantes**:
+- Adapta la complejidad al nivel del estudiante ($difficultyLevel)
+- Usa un lenguaje claro y directo
+- Incluye analogías cuando sea apropiado
+- Si es un tema de programación, incluye ejemplos de código
+- SOLO SI ES UN TEMA DE PROGRAMACION INCLUYE EJEMPLOS DE CODIGO, SINO NO LOS INCLUYAS
+- Relaciona el contenido con los objetivos de aprendizaje
+- No uses markdown ni formato especial en el texto ni en los ejercicios
+
+**Estructura JSON esperada**:
+{
+  "introduction": "Introducción al tema...",
+  "sections": [
+    {
+      "title": "Título de la sección",
+      "content": "Contenido detallado de la sección..."
+    }
+  ],
+  "keyPoints": [
+    "Punto clave 1",
+    "Punto clave 2"
+  ],
+  "examples": [
+    "Ejemplo práctico 1",
+    "Ejemplo práctico 2"
+  ]
+}
+
+Devuelve SOLO el JSON, sin texto adicional.
+''';
+  }
+
+  String _getDifficultyLevel(double theta) {
+    if (theta < -0.5) return 'Básico';
+    if (theta < 0.5) return 'Intermedio';
+    return 'Avanzado';
   }
 
   Future<List<Exercise>> generateExercises({
@@ -52,6 +156,7 @@ class ExerciseService {
     required String description,
     required double currentTheta,
     required List<String> objectives,
+    required TheoryContent theoryContent,
     int count = 5,
     bool isReinforcement = false,
   }) async {
@@ -62,6 +167,7 @@ class ExerciseService {
       description: description,
       currentTheta: currentTheta,
       objectives: objectives,
+      theoryContent: theoryContent,
       count: count,
       isReinforcement: isReinforcement,
       isProgramming: isProgramming,
@@ -81,26 +187,12 @@ class ExerciseService {
     }
   }
 
-  Future<List<Exercise>> generateReinforcementExercises({
-    required String subtopic,
-    required List<String> failedConcepts,
-    required double currentTheta,
-  }) async {
-    return generateExercises(
-      subtopic: subtopic,
-      description: 'Refuerzo en: ${failedConcepts.join(", ")}',
-      currentTheta: currentTheta,
-      objectives: failedConcepts,
-      count: 3,
-      isReinforcement: true,
-    );
-  }
-
   String _buildExercisePrompt({
     required String subtopic,
     required String description,
     required double currentTheta,
     required List<String> objectives,
+    required TheoryContent theoryContent,
     required int count,
     required bool isReinforcement,
     required bool isProgramming,
@@ -110,13 +202,29 @@ class ExerciseService {
         ? '\n**IMPORTANTE**: Estos son ejercicios de REFUERZO. Enfócate en los conceptos específicos donde el estudiante tuvo dificultades.'
         : '';
 
-    //definir tipos de ejercicios segun el tema
     final exerciseTypes = isProgramming
         ? _getProgrammingExerciseTypes()
         : _getGeneralExerciseTypes();
 
+    final theoryContext =
+        '''
+**CONTEXTO TEÓRICO**:
+El estudiante acaba de revisar la siguiente teoría:
+
+Introducción: ${theoryContent.introduction}
+
+Puntos clave aprendidos:
+${theoryContent.keyPoints.map((p) => '- $p').join('\n')}
+
+Ejemplos vistos:
+${theoryContent.examples.map((e) => '- $e').join('\n')}
+''';
+
     return '''
 Genera $count ejercicios dinámicos para el subtema "$subtopic".
+
+$theoryContext
+
 Descripción: $description
 Nivel de conocimiento del estudiante (θ): $currentTheta
 
@@ -127,17 +235,20 @@ ${objectives.map((o) => '- $o').join('\n')}
 
 $exerciseTypes
 
+**CRÍTICO**: Los ejercicios deben estar DIRECTAMENTE relacionados con la teoría proporcionada:
+- Usa los conceptos explicados en las secciones teóricas
+- Referencias los puntos clave mencionados
+- Aplica los ejemplos dados o crea variaciones de ellos
+- Asegúrate de que si el estudiante entendió la teoría, pueda resolver los ejercicios
+
 **Requisitos**:
 - Varía los tipos de ejercicios
 - Ajusta la dificultad según el θ del estudiante
-- Incluye retroalimentación educativa
+- Incluye retroalimentación educativa que conecte con la teoría
 - Asegúrate de que los ejercicios sean claros y verificables
 - Devuelve SOLO el JSON, sin texto adicional
-- No incluyas markdown ni formato especial
-- No agregues explicaciones fuera del JSON
-- No agregues ejercicios de codificación si el tema no es de programación
 
-Genera los ejercicios ahora. No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
+Genera los ejercicios ahora.
 ''';
   }
 
@@ -147,8 +258,7 @@ Tipos de ejercicios a incluir:
 1. multiple_choice: Preguntas con 4 opciones, una correcta.
 2. block_order: Ordenar líneas de código o pasos de un algoritmo en el orden correcto.
 3. code: Analizar un fragmento de código y seleccionar cuál será su salida/resultado.
-
-**IMPORTANTE**: No agregues los code snippets en el statement.
+4. matching: Relacionar funciones o conceptos de programación con sus descripciones o usos correctos.
 
 **Estructura JSON esperada**:
 {
@@ -179,6 +289,20 @@ Tipos de ejercicios a incluir:
       "hints": ["Pista 1", "Pista 2"],
       "feedback": "Explicación de la salida",
       "difficulty": 0.8
+    },
+    {
+      "type": "matching",
+      "statement": "Relaciona cada función con su descripción correcta",
+      "leftColumn": ["Función A", "Función B", "Función C", "Función D"],
+      "rightColumn": ["Descripción 1", "Descripción 2", "Descripción 3", "Descripción 4"],
+      "correctMatches": {
+        "Función A": "Descripción correcta A",
+        "Función B": "Descripción correcta B",
+        "Función C": "Descripción correcta C",
+        "Función D": "Descripción correcta D"
+      },
+      "feedback": "Explicación de las relaciones correctas",
+      "difficulty": 0.7
     }
   ]
 }
@@ -228,11 +352,6 @@ Tipos de ejercicios a incluir:
     }
   ]
 }
-
-**IMPORTANTE**: 
-- NO uses ejemplos de programación en ejercicios de matching o block_order
-- Los ejercicios de matching deben relacionar conceptos del tema actual
-- Los ejercicios de block_order deben ordenar pasos, fases o conceptos del tema
 ''';
   }
 
@@ -262,5 +381,29 @@ Tipos de ejercicios a incluir:
 - Dificultad recomendada: 0.7 - 0.9
 ''';
     }
+  }
+
+  Future<List<Exercise>> generateReinforcementExercises({
+    required String subtopic,
+    required List<String> failedConcepts,
+    required double currentTheta,
+  }) async {
+    final simpleTheory = TheoryContent(
+      introduction:
+          'Vamos a reforzar los conceptos en los que tuviste dificultades.',
+      sections: [],
+      keyPoints: failedConcepts,
+      examples: [],
+    );
+
+    return generateExercises(
+      subtopic: subtopic,
+      description: 'Refuerzo en: ${failedConcepts.join(", ")}',
+      currentTheta: currentTheta,
+      objectives: failedConcepts,
+      theoryContent: simpleTheory,
+      count: 3,
+      isReinforcement: true,
+    );
   }
 }

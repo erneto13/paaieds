@@ -16,16 +16,36 @@ class TheoryContent {
   });
 
   factory TheoryContent.fromJson(Map<String, dynamic> json) {
-    return TheoryContent(
-      introduction: json['introduction'] ?? '',
-      sections:
-          (json['sections'] as List<dynamic>?)
-              ?.map((s) => TheorySection.fromJson(s as Map<String, dynamic>))
-              .toList() ??
-          [],
-      keyPoints: List<String>.from(json['keyPoints'] ?? []),
-      examples: List<String>.from(json['examples'] ?? []),
-    );
+    try {
+      return TheoryContent(
+        introduction: json['introduction']?.toString() ?? '',
+        sections:
+            (json['sections'] as List<dynamic>?)?.map((s) {
+              if (s is Map<String, dynamic>) {
+                return TheorySection.fromJson(s);
+              }
+              return TheorySection(title: '', content: s.toString());
+            }).toList() ??
+            [],
+        keyPoints:
+            (json['keyPoints'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+        examples:
+            (json['examples'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+      );
+    } catch (e) {
+      return TheoryContent(
+        introduction: 'Error al cargar contenido teórico',
+        sections: [],
+        keyPoints: [],
+        examples: [],
+      );
+    }
   }
 
   Map<String, dynamic> toJson() {

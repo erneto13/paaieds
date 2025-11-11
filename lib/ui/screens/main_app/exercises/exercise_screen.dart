@@ -6,6 +6,7 @@ import 'package:paaieds/core/models/roadmap_section.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/exercise_provider.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
+import 'package:paaieds/ui/screens/main_app/exercises/theory_screen.dart';
 import 'package:paaieds/ui/widgets/exercises/block_order_exercise.dart';
 import 'package:paaieds/ui/widgets/exercises/code_exercise.dart';
 import 'package:paaieds/ui/widgets/exercises/matching_exercise.dart';
@@ -32,16 +33,18 @@ class ExerciseScreen extends StatefulWidget {
 }
 
 class _ExerciseScreenState extends State<ExerciseScreen> {
+  bool _theoryShown = false;
+
   @override
   void initState() {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadExercises();
+      _loadTheory();
     });
   }
 
-  Future<void> _loadExercises() async {
+  Future<void> _loadTheory() async {
     final exerciseProvider = Provider.of<ExerciseProvider>(
       context,
       listen: false,
@@ -77,6 +80,70 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       Navigator.pop(context);
       return;
     }
+
+    final success = await exerciseProvider.generateTheoryContent(
+      userId: userId,
+      roadmapId: roadmapId,
+      section: widget.section,
+      currentTheta: widget.currentTheta,
+    );
+
+    if (!mounted) return;
+
+    if (!success) {
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error al cargar contenido',
+        description: exerciseProvider.errorMessage ?? 'Intenta más tarde.',
+      );
+      Navigator.pop(context);
+      return;
+    }
+
+    _showTheoryScreen();
+  }
+
+  void _showTheoryScreen() {
+    final exerciseProvider = Provider.of<ExerciseProvider>(
+      context,
+      listen: false,
+    );
+
+    if (exerciseProvider.theoryContent == null) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TheoryScreen(
+          section: widget.section,
+          theoryContent: exerciseProvider.theoryContent!,
+          onContinue: () {
+            Navigator.pop(context);
+            _loadExercises();
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _loadExercises() async {
+    setState(() => _theoryShown = true);
+
+    final exerciseProvider = Provider.of<ExerciseProvider>(
+      context,
+      listen: false,
+    );
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final roadmapProvider = Provider.of<RoadmapProvider>(
+      context,
+      listen: false,
+    );
+
+    final userId = authProvider.currentUser?.uid;
+    final roadmapId = roadmapProvider.currentRoadmap?.id;
+
+    if (userId == null || roadmapId == null) return;
 
     final success = await exerciseProvider.generateExercisesForSection(
       userId: userId,
@@ -187,10 +254,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       listen: false,
     );
 
-    exerciseProvider.currentProgress!.attempts
-        .where((attempt) => !attempt.isCorrect)
-        .toList();
-
     final failedConcepts = widget.section.objectives.take(3).toList();
 
     CustomSnackbar.showInfo(
@@ -261,43 +324,77 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           },
         ),
         backgroundColor: Colors.white,
-        body: Consumer<ExerciseProvider>(
-          builder: (context, exerciseProvider, child) {
-            if (exerciseProvider.isLoading) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    FadeIn(
-                      child: Image.asset(
-                        'assets/sonic.gif',
-                        width: 240,
-                        height: 240,
-                        fit: BoxFit.contain,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Cargando ejercicios...',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }
+        body: !_theoryShown
+            ? _buildLoadingTheory()
+            : Consumer<ExerciseProvider>(
+                builder: (context, exerciseProvider, child) {
+                  if (exerciseProvider.isLoading) {
+                    return _buildLoadingExercises();
+                  }
 
-            if (exerciseProvider.currentExercise == null) {
-              return _buildEmptyState();
-            }
+                  if (exerciseProvider.currentExercise == null) {
+                    return _buildEmptyState();
+                  }
 
-            return _buildBody(exerciseProvider);
-          },
-        ),
+                  return _buildBody(exerciseProvider);
+                },
+              ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingTheory() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          FadeIn(
+            child: Image.asset(
+              'assets/sonic.gif',
+              width: 240,
+              height: 240,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Preparando contenido teórico...',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingExercises() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          FadeIn(
+            child: Image.asset(
+              'assets/sonic.gif',
+              width: 240,
+              height: 240,
+              fit: BoxFit.contain,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Generando ejercicios personalizados...',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -372,7 +469,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             child: Column(
               children: [
                 _buildExerciseWidget(provider),
-
                 if (!provider.isSectionAlreadyCompleted) ...[
                   if (provider.showingResult) ...[
                     const SizedBox(height: 24),
@@ -476,9 +572,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
-
             SectionSummaryCard(
               section: widget.section,
               finalTheta: widget.currentTheta,
@@ -520,16 +614,20 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (confirm != true || !mounted) return;
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final roadmapProvider = Provider.of<RoadmapProvider>(
+      context,
+      listen: false,
+    );
 
     CustomSnackbar.showInfo(
       context: context,
-      message: 'Generando nuevos ejercicios...',
+      message: 'Regenerando contenido...',
       description: 'Por favor espera un momento',
     );
 
     final success = await provider.retryCompletedSection(
       userId: authProvider.currentUser!.uid,
-      roadmapId: widget.section.id,
+      roadmapId: roadmapProvider.currentRoadmap!.id,
       section: widget.section,
       currentTheta: widget.currentTheta,
     );
@@ -537,15 +635,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     if (!mounted) return;
 
     if (success) {
-      CustomSnackbar.showSuccess(
-        context: context,
-        message: 'Ejercicios regenerados',
-        description: '¡Comienza de nuevo!',
-      );
+      setState(() => _theoryShown = false);
+      _showTheoryScreen();
     } else {
       CustomSnackbar.showError(
         context: context,
-        message: 'Error al regenerar ejercicios',
+        message: 'Error al regenerar contenido',
         description: provider.errorMessage ?? 'Intenta más tarde',
       );
     }

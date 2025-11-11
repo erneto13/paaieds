@@ -12,6 +12,7 @@ class ExerciseProvider extends ChangeNotifier {
   final UserService _userService = UserService();
 
   List<Exercise> _exercises = [];
+  TheoryContent? _theoryContent;
   SectionProgress? _currentProgress;
   int _currentExerciseIndex = 0;
   bool _isLoading = false;
@@ -23,6 +24,7 @@ class ExerciseProvider extends ChangeNotifier {
   String? _currentRoadmapId;
 
   List<Exercise> get exercises => _exercises;
+  TheoryContent? get theoryContent => _theoryContent;
   SectionProgress? get currentProgress => _currentProgress;
   int get currentExerciseIndex => _currentExerciseIndex;
   bool get isLoading => _isLoading;
@@ -40,7 +42,73 @@ class ExerciseProvider extends ChangeNotifier {
     return _exercises[_currentExerciseIndex];
   }
 
-  //genera ejercicios para una sección
+  Future<bool> generateTheoryContent({
+    required String userId,
+    required String roadmapId,
+    required RoadmapSection section,
+    required double currentTheta,
+    bool forceRegenerate = false,
+  }) async {
+    if (userId.isEmpty || roadmapId.isEmpty) {
+      _errorMessage = 'IDs de usuario o roadmap inválidos';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _errorMessage = null;
+    _currentUserId = userId;
+    _currentRoadmapId = roadmapId;
+    notifyListeners();
+
+    try {
+      if (!forceRegenerate) {
+        final savedTheory = await _userService.getSectionTheory(
+          uid: userId,
+          roadmapId: roadmapId,
+          sectionId: section.id,
+        );
+
+        if (savedTheory != null) {
+          _theoryContent = savedTheory;
+          _isLoading = false;
+          notifyListeners();
+          return true;
+        }
+      }
+
+      _theoryContent = await _exerciseService.generateTheoryContent(
+        subtopic: section.subtopic,
+        description: section.description,
+        objectives: section.objectives,
+        currentTheta: currentTheta,
+      );
+
+      if (_theoryContent == null) {
+        throw Exception('No se pudo generar el contenido teórico');
+      }
+
+      final saved = await _userService.saveSectionTheory(
+        uid: userId,
+        roadmapId: roadmapId,
+        sectionId: section.id,
+        theoryContent: _theoryContent!,
+      );
+
+      if (!saved) {}
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Error al generar contenido teórico: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
   Future<bool> generateExercisesForSection({
     required String userId,
     required String roadmapId,
@@ -55,7 +123,13 @@ class ExerciseProvider extends ChangeNotifier {
       return false;
     }
 
-    _resetState();
+    if (_theoryContent == null) {
+      _errorMessage = 'Debe generar la teoría primero';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+
     _isLoading = true;
     _errorMessage = null;
     _currentUserId = userId;
@@ -148,6 +222,16 @@ class ExerciseProvider extends ChangeNotifier {
       ),
     );
 
+    final theorySuccess = await generateTheoryContent(
+      userId: userId,
+      roadmapId: roadmapId,
+      section: section,
+      currentTheta: currentTheta,
+      forceRegenerate: true,
+    );
+
+    if (!theorySuccess) return false;
+
     return await generateExercisesForSection(
       userId: userId,
       roadmapId: roadmapId,
@@ -180,6 +264,7 @@ class ExerciseProvider extends ChangeNotifier {
       attempts: [..._currentProgress!.attempts, attempt],
       correctCount: _currentProgress!.correctCount + (isCorrect ? 1 : 0),
       totalAttempts: _currentProgress!.totalAttempts + 1,
+      theoryReviewed: _currentProgress!.theoryReviewed,
     );
 
     _isCorrectAnswer = isCorrect;
@@ -253,6 +338,7 @@ class ExerciseProvider extends ChangeNotifier {
       correctCount: _currentProgress!.correctCount,
       totalAttempts: _currentProgress!.totalAttempts,
       isCompleted: true,
+      theoryReviewed: true,
     );
 
     if (_currentUserId != null && _currentRoadmapId != null) {
@@ -335,6 +421,7 @@ class ExerciseProvider extends ChangeNotifier {
 
   void reset() {
     _exercises = [];
+    _theoryContent = null;
     _currentProgress = null;
     _currentExerciseIndex = 0;
     _errorMessage = null;
@@ -352,15 +439,6 @@ class ExerciseProvider extends ChangeNotifier {
   void hideResult() {
     _showingResult = false;
     notifyListeners();
-  }
-
-  void _resetState() {
-    _exercises = [];
-    _currentProgress = null;
-    _currentExerciseIndex = 0;
-    _showingResult = false;
-    _isCorrectAnswer = false;
-    _isSectionAlreadyCompleted = false;
   }
 
   Future<(List<Exercise>?, SectionProgress?)> _loadSavedData({
@@ -402,6 +480,7 @@ class ExerciseProvider extends ChangeNotifier {
           attempts: [],
           correctCount: 0,
           totalAttempts: 0,
+          theoryReviewed: false,
         );
 
     if (savedProgress != null &&
@@ -427,11 +506,16 @@ class ExerciseProvider extends ChangeNotifier {
     required String userId,
     required String roadmapId,
   }) async {
+    if (_theoryContent == null) {
+      throw Exception('Debe generar la teoría primero');
+    }
+
     _exercises = await _exerciseService.generateExercises(
       subtopic: section.subtopic,
       description: section.description,
       currentTheta: currentTheta,
       objectives: section.objectives,
+      theoryContent: _theoryContent!,
     );
 
     if (_exercises.isEmpty) {
@@ -444,6 +528,7 @@ class ExerciseProvider extends ChangeNotifier {
       attempts: [],
       correctCount: 0,
       totalAttempts: 0,
+      theoryReviewed: true,
     );
 
     _currentExerciseIndex = 0;
@@ -455,8 +540,7 @@ class ExerciseProvider extends ChangeNotifier {
       exercises: _exercises,
     );
 
-    if (saved) {
-    } else {}
+    if (!saved) {}
   }
 
   Future<void> _saveProgress() async {

@@ -184,7 +184,6 @@ class UserService {
         'completedAt': FieldValue.serverTimestamp(),
       };
 
-      // Agregar las preguntas si están disponibles
       if (questionsData != null && questionsData.isNotEmpty) {
         assessment['questions'] = questionsData.map((q) {
           return {
@@ -336,7 +335,6 @@ class UserService {
         final data = doc.data();
         data['id'] = doc.id;
 
-        // Convert Timestamp to DateTime string
         if (data['createdAt'] != null) {
           data['createdAt'] = (data['createdAt'] as Timestamp)
               .toDate()
@@ -363,7 +361,6 @@ class UserService {
             final data = doc.data();
             data['id'] = doc.id;
 
-            // Convert Timestamp to DateTime string
             if (data['createdAt'] != null) {
               data['createdAt'] = (data['createdAt'] as Timestamp)
                   .toDate()
@@ -393,7 +390,6 @@ class UserService {
       final data = doc.data()!;
       data['id'] = doc.id;
 
-      // Convert Timestamp to DateTime string
       if (data['createdAt'] != null) {
         data['createdAt'] = (data['createdAt'] as Timestamp)
             .toDate()
@@ -634,6 +630,94 @@ class UserService {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  //guarda el contenido teórico de una sección
+  Future<bool> saveSectionTheory({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+    required TheoryContent theoryContent,
+  }) async {
+    try {
+      final theoryJson = theoryContent.toJson();
+
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .collection('theory')
+          .doc(sectionId)
+          .set({
+            'sectionId': sectionId,
+            'introduction': theoryJson['introduction'],
+            'sections': theoryJson['sections'],
+            'keyPoints': theoryJson['keyPoints'],
+            'examples': theoryJson['examples'],
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  //obtiene el contenido teórico de una sección
+  Future<TheoryContent?> getSectionTheory({
+    required String uid,
+    required String roadmapId,
+    required String sectionId,
+  }) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('roadmaps')
+          .doc(roadmapId)
+          .collection('theory')
+          .doc(sectionId)
+          .get();
+
+      if (!doc.exists) {
+        return null;
+      }
+
+      final data = doc.data();
+      if (data == null) {
+        return null;
+      }
+
+      final theoryContent = TheoryContent(
+        introduction: data['introduction']?.toString() ?? '',
+        sections:
+            (data['sections'] as List<dynamic>?)?.map((s) {
+              if (s is Map<String, dynamic>) {
+                return TheorySection(
+                  title: s['title']?.toString() ?? '',
+                  content: s['content']?.toString() ?? '',
+                );
+              }
+              return TheorySection(title: '', content: '');
+            }).toList() ??
+            [],
+        keyPoints:
+            (data['keyPoints'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+        examples:
+            (data['examples'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            [],
+      );
+
+      return theoryContent;
+    } catch (e) {
+      return null;
     }
   }
 }
