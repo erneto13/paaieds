@@ -5,6 +5,7 @@ import 'package:paaieds/util/json_parser.dart';
 class ExerciseService {
   final GeminiService _geminiService = GeminiService();
 
+  //check if topic is programming related
   bool _isProgrammingTopic(String subtopic, String description) {
     final programmingKeywords = [
       'código',
@@ -60,13 +61,11 @@ class ExerciseService {
 
     try {
       final result = await _geminiService.generateText(prompt);
-
       final jsonData = JsonParserUtil.parseJsonObject(result);
 
       if (!jsonData.containsKey('introduction')) {}
 
       final theoryContent = TheoryContent.fromJson(jsonData);
-
       return theoryContent;
     } catch (e) {
       return TheoryContent(
@@ -254,123 +253,239 @@ Genera los ejercicios ahora.
 
   String _getProgrammingExerciseTypes() {
     return '''
-Tipos de ejercicios a incluir:
-1. multiple_choice: Preguntas con 4 opciones, una correcta.
-2. block_order: Ordenar líneas de código o pasos de un algoritmo en el orden correcto.
-3. code: Analizar un fragmento de código y seleccionar cuál será su salida/resultado.
-4. matching: Relacionar funciones o conceptos de programación con sus descripciones o usos correctos.
+**TIPOS DE EJERCICIOS PARA TEMAS DE PROGRAMACIÓN**:
 
-**REGLAS ESTRICTAS PARA EL FEEDBACK**:
-- No uses palabras como: "Correcto", "Incorrecto", "Bien hecho", "Excelente", "Fallaste", "Respuesta correcta", "Respuesta incorrecta" ni sinónimos.
-- El feedback debe ser **solo una explicación breve y neutral** basada en la teoría o el razonamiento detrás de la respuesta.
-- No evalúes el desempeño del estudiante ni uses expresiones de aprobación o desaprobación.
-- Ejemplo válido: "La opción elegida refleja el concepto principal descrito en la teoría."
-- Ejemplo inválido: "Correcto, elegiste la respuesta adecuada."
-- Limítate a explicar **por qué** la respuesta es válida o no, de forma objetiva y educativa.
+1. **multiple_choice**: Preguntas conceptuales sobre programación (SIN código en el statement)
+2. **block_order**: Ordenar líneas de código o pasos de algoritmos
+3. **code**: Analizar código y predecir su salida
+4. **matching**: Relacionar conceptos/funciones con sus descripciones
 
-**REGLAS ESTRICTAS PARA LOS EJERCICIOS**:
-- En el statement solo describe la pregunta o instrucción, no incluyas fragmentos de código en cualquier tipo de ejercicio
-si el ejercicio es el tipo "code", incluyelo en el campo "codeSnippet".
-**Estructura JSON esperada**:
+---
+
+**🚫 REGLAS CRÍTICAS SOBRE CÓDIGO EN EL STATEMENT 🚫**
+
+LEE ESTO CUIDADOSAMENTE Y SÍGUELO AL PIE DE LA LETRA:
+
+1. **Para ejercicios tipo "multiple_choice"**:
+   - El campo "statement" NUNCA debe contener código
+   - El campo "statement" NUNCA debe contener ejemplos de código
+   - El campo "statement" NUNCA debe contener fragmentos de código
+   - El campo "statement" NUNCA debe contener sintaxis de programación
+   - El campo "statement" debe ser SOLO texto descriptivo y conceptual
+   
+   ❌ MAL: "statement": "¿Qué imprime este código? console.log('hola')"
+   ✅ BIEN: "statement": "¿Cuál es la forma correcta de imprimir en consola en JavaScript?"
+
+2. **Para ejercicios tipo "block_order"**:
+   - El campo "statement" debe ser solo la instrucción
+   - El código va en el campo "blocks"
+   
+   ❌ MAL: "statement": "Ordena este código: let x = 5"
+   ✅ BIEN: "statement": "Ordena las siguientes líneas de código correctamente"
+
+3. **Para ejercicios tipo "code"**:
+   - El campo "statement" debe ser solo la pregunta
+   - TODO el código va en el campo "codeSnippet"
+   
+   ❌ MAL: "statement": "function sum(a,b) { return a+b } ¿Cuál es la salida?"
+   ✅ BIEN: "statement": "¿Cuál será la salida de este código?"
+             "codeSnippet": "function sum(a,b) { return a+b }..."
+
+4. **Para ejercicios tipo "matching"**:
+   - El campo "statement" solo describe la tarea
+   - Los conceptos de código van en "leftColumn" o "rightColumn"
+
+---
+
+**REGLAS PARA EL FEEDBACK**:
+- No uses palabras evaluativas: "Correcto", "Incorrecto", "Bien", "Mal", "Excelente", "Fallaste"
+- El feedback debe ser neutral y educativo
+- Explica el razonamiento detrás de la respuesta
+- Ejemplo válido: "Esta opción refleja el concepto de scope en JavaScript"
+- Ejemplo inválido: "¡Correcto! Elegiste la respuesta adecuada"
+
+---
+
+**ESTRUCTURA JSON ESPERADA**:
 {
   "subtopic": "nombre del tema",
   "exercises": [
     {
       "type": "multiple_choice",
-      "statement": "Pregunta clara y específica",
-      "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
-      "correctAnswer": "Opción correcta",
-      "feedback": "Explicación breve de por qué es correcta",
+      "statement": "¿Cuál es la función principal de un closure en JavaScript?",
+      "options": [
+        "Encapsular variables privadas",
+        "Ejecutar código asíncrono",
+        "Crear clases",
+        "Manejar errores"
+      ],
+      "correctAnswer": "Encapsular variables privadas",
+      "feedback": "Los closures permiten a una función acceder a variables de su scope externo incluso después de que la función externa haya terminado",
       "difficulty": 0.6
     },
     {
       "type": "block_order",
-      "statement": "Instrucción para ordenar líneas de código",
-      "blocks": ["Línea 1", "Línea 2", "Línea 3", "Línea 4"],
-      "correctOrder": ["Línea correcta 1", "Línea correcta 2", ...],
-      "feedback": "Explicación del orden correcto",
-      "difficulty": 0.7
+      "statement": "Ordena las líneas para crear una función que sume dos números",
+      "blocks": [
+        "function suma(a, b) {",
+        "  return a + b;",
+        "}",
+        "console.log(suma(5, 3));"
+      ],
+      "correctOrder": [
+        "function suma(a, b) {",
+        "  return a + b;",
+        "}",
+        "console.log(suma(5, 3));"
+      ],
+      "feedback": "La estructura correcta define primero la función y luego la invoca",
+      "difficulty": 0.5
     },
     {
       "type": "code",
       "statement": "¿Cuál será la salida de este código?",
-      "codeSnippet": "código completo aquí",
-      "outputOptions": ["Salida A", "Salida B", "Salida C", "Salida D"],
-      "correctAnswer": "Salida correcta",
-      "hints": ["Pista 1", "Pista 2"],
-      "feedback": "Explicación de la salida",
-      "difficulty": 0.8
+      "codeSnippet": "let x = 5;\\nlet y = x++;\\nconsole.log(y);",
+      "outputOptions": ["4", "5", "6", "undefined"],
+      "correctAnswer": "5",
+      "hints": [
+        "El operador ++ puede ser prefijo o sufijo",
+        "x++ retorna el valor antes de incrementar"
+      ],
+      "feedback": "El operador sufijo ++ retorna el valor original antes de incrementarlo, por lo que y recibe 5 y luego x se convierte en 6",
+      "difficulty": 0.7
     },
     {
       "type": "matching",
-      "statement": "Relaciona cada función con su descripción correcta",
-      "leftColumn": ["Función A", "Función B", "Función C", "Función D"],
-      "rightColumn": ["Descripción 1", "Descripción 2", "Descripción 3", "Descripción 4"],
+      "statement": "Relaciona cada método de array con su función",
+      "leftColumn": ["map", "filter", "reduce", "forEach"],
+      "rightColumn": [
+        "Ejecuta una función para cada elemento sin retornar",
+        "Transforma cada elemento y retorna un nuevo array",
+        "Filtra elementos según una condición",
+        "Acumula valores en un resultado único"
+      ],
       "correctMatches": {
-        "Función A": "Descripción correcta A",
-        "Función B": "Descripción correcta B",
-        "Función C": "Descripción correcta C",
-        "Función D": "Descripción correcta D"
+        "map": "Transforma cada elemento y retorna un nuevo array",
+        "filter": "Filtra elementos según una condición",
+        "reduce": "Acumula valores en un resultado único",
+        "forEach": "Ejecuta una función para cada elemento sin retornar"
       },
-      "feedback": "Explicación de las relaciones correctas",
-      "difficulty": 0.7
+      "feedback": "Cada método tiene un propósito específico en la manipulación de arrays",
+      "difficulty": 0.6
     }
   ]
 }
+
+**RECUERDA**: 
+- El statement NUNCA debe contener código en ejercicios multiple_choice
+- El statement NUNCA debe contener código en ejercicios matching
+- Si necesitas mostrar código, usa el tipo "code" con el campo "codeSnippet"
 ''';
   }
 
   String _getGeneralExerciseTypes() {
     return '''
-**Tipos de ejercicios a incluir**:
-1. **multiple_choice**: Preguntas con 4 opciones, una correcta.
-2. **block_order**: Ordenar conceptos, pasos o elementos en el orden correcto.
-3. **matching**: Relacionar elementos de una columna con elementos de otra columna.
+**TIPOS DE EJERCICIOS PARA TEMAS NO PROGRAMACIÓN**:
 
-**REGLAS ESTRICTAS PARA EL FEEDBACK**:
-- No uses palabras como: "Correcto", "Incorrecto", "Bien hecho", "Excelente", "Fallaste", "Respuesta correcta", "Respuesta incorrecta" ni sinónimos.
-- El feedback debe ser **solo una explicación breve y neutral** basada en la teoría o el razonamiento detrás de la respuesta.
-- No evalúes el desempeño del estudiante ni uses expresiones de aprobación o desaprobación.
-- Ejemplo válido: "La opción elegida refleja el concepto principal descrito en la teoría."
-- Ejemplo inválido: "Correcto, elegiste la respuesta adecuada."
-- Limítate a explicar **por qué** la respuesta es válida o no, de forma objetiva y educativa.
+1. **multiple_choice**: Preguntas conceptuales con 4 opciones
+2. **block_order**: Ordenar pasos, procesos o secuencias lógicas
+3. **matching**: Relacionar conceptos con definiciones o características
 
-**Estructura JSON esperada**:
+---
+
+**🚫 REGLAS CRÍTICAS PARA TEMAS NO PROGRAMACIÓN 🚫**
+
+IMPORTANTE: Este NO es un tema de programación, por lo tanto:
+
+1. **NO incluyas ningún ejercicio de tipo "code"**
+2. **NO incluyas código en ningún campo**
+3. **NO uses sintaxis de programación**
+4. **NO uses ejemplos de código**
+5. **NO menciones lenguajes de programación**
+
+El campo "statement" debe contener SOLO:
+- Preguntas conceptuales claras
+- Instrucciones en lenguaje natural
+- Descripciones sin formato técnico
+
+---
+
+**REGLAS PARA EL FEEDBACK**:
+- No uses palabras evaluativas: "Correcto", "Incorrecto", "Bien", "Mal", "Excelente", "Fallaste"
+- El feedback debe ser neutral y educativo
+- Explica el razonamiento detrás de la respuesta
+- Ejemplo válido: "Esta opción refleja el concepto principal descrito en la teoría"
+- Ejemplo inválido: "¡Correcto! Elegiste la respuesta adecuada"
+
+---
+
+**ESTRUCTURA JSON ESPERADA**:
 {
   "subtopic": "nombre del tema",
   "exercises": [
     {
       "type": "multiple_choice",
-      "statement": "Pregunta clara y específica sobre el concepto",
-      "options": ["Opción A", "Opción B", "Opción C", "Opción D"],
-      "correctAnswer": "Opción correcta",
-      "feedback": "Explicación breve de por qué es correcta",
-      "difficulty": 0.6
+      "statement": "¿Cuál es la principal característica del método científico?",
+      "options": [
+        "La observación sistemática de fenómenos",
+        "El uso de instrumentos tecnológicos",
+        "La publicación de resultados",
+        "El trabajo en laboratorio"
+      ],
+      "correctAnswer": "La observación sistemática de fenómenos",
+      "feedback": "El método científico se basa fundamentalmente en la observación controlada y sistemática para generar conocimiento",
+      "difficulty": 0.5
     },
     {
       "type": "block_order",
-      "statement": "Instrucción para ordenar los elementos",
-      "blocks": ["Paso 1", "Paso 2", "Paso 3", "Paso 4"],
-      "correctOrder": ["Paso correcto 1", "Paso correcto 2", ...],
-      "feedback": "Explicación del orden correcto",
-      "difficulty": 0.7
+      "statement": "Ordena las etapas del ciclo del agua",
+      "blocks": [
+        "Evaporación del agua de océanos y ríos",
+        "Condensación en las nubes",
+        "Precipitación en forma de lluvia",
+        "Infiltración en el suelo"
+      ],
+      "correctOrder": [
+        "Evaporación del agua de océanos y ríos",
+        "Condensación en las nubes",
+        "Precipitación en forma de lluvia",
+        "Infiltración en el suelo"
+      ],
+      "feedback": "El ciclo del agua sigue un proceso continuo desde la evaporación hasta el retorno al suelo",
+      "difficulty": 0.6
     },
     {
       "type": "matching",
-      "statement": "Relaciona cada concepto con su descripción correcta",
-      "leftColumn": ["Concepto A", "Concepto B", "Concepto C", "Concepto D"],
-      "rightColumn": ["Descripción 1", "Descripción 2", "Descripción 3", "Descripción 4"],
+      "statement": "Relaciona cada ecosistema con su característica principal",
+      "leftColumn": [
+        "Bosque tropical",
+        "Desierto",
+        "Tundra",
+        "Sabana"
+      ],
+      "rightColumn": [
+        "Temperaturas extremadamente bajas",
+        "Alta biodiversidad y humedad",
+        "Escasez de precipitaciones",
+        "Pastizales con árboles dispersos"
+      ],
       "correctMatches": {
-        "Concepto A": "Descripción correcta A",
-        "Concepto B": "Descripción correcta B",
-        "Concepto C": "Descripción correcta C",
-        "Concepto D": "Descripción correcta D"
+        "Bosque tropical": "Alta biodiversidad y humedad",
+        "Desierto": "Escasez de precipitaciones",
+        "Tundra": "Temperaturas extremadamente bajas",
+        "Sabana": "Pastizales con árboles dispersos"
       },
-      "feedback": "Explicación de las relaciones correctas",
+      "feedback": "Cada ecosistema tiene características únicas determinadas por clima y geografía",
       "difficulty": 0.7
     }
   ]
 }
+
+**RECUERDA**: 
+- Este NO es un tema de programación
+- NO incluyas código en ningún campo
+- NO uses ejercicios tipo "code"
+- Usa lenguaje natural y conceptual
 ''';
   }
 
