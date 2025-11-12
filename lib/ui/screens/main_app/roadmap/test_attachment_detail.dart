@@ -4,6 +4,7 @@ import 'package:paaieds/core/models/forum_post.dart';
 import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
+import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class TestAttachmentDetail extends StatefulWidget {
@@ -58,17 +59,10 @@ class _TestAttachmentDetailState extends State<TestAttachmentDetail> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.grey[800]),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Detalles del Test',
-          style: TextStyle(color: Colors.grey[800], fontSize: 18),
-        ),
+      appBar: CustomAppBar(
+        title: 'Detalles del Test',
+        customIcon: Icons.arrow_back,
+        onCustomIconTap: () => Navigator.pop(context),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

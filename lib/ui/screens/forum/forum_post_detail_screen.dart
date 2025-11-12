@@ -3,8 +3,11 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:intl/intl.dart';
 import 'package:paaieds/config/app_colors.dart';
+import 'package:paaieds/core/models/forum_post.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/forum_provider.dart';
+import 'package:paaieds/ui/screens/main_app/roadmap/roadmap_attachment_detail.dart';
+import 'package:paaieds/ui/screens/main_app/roadmap/test_attachment_detail.dart';
 import 'package:paaieds/ui/widgets/forum/forum_reply_card.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
@@ -113,6 +116,7 @@ class _ForumPostDetailScreenState extends State<ForumPostDetailScreen> {
 
     if (confirm != true) return;
 
+    // ignore: use_build_context_synchronously
     final forumProvider = Provider.of<ForumProvider>(context, listen: false);
     final success = await forumProvider.deleteReply(replyId, widget.postId);
 
@@ -275,59 +279,87 @@ class _ForumPostDetailScreenState extends State<ForumPostDetailScreen> {
   }
 
   Widget _buildAttachment(post) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _getAttachmentColor().withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: _getAttachmentColor().withValues(alpha: 0.3),
-          width: 1.5,
+    return GestureDetector(
+      onTap: () => _navigateToAttachmentDetail(post.attachment!),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _getAttachmentColor().withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _getAttachmentColor().withValues(alpha: 0.3),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: _getAttachmentColor().withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                _getAttachmentIcon(),
+                color: _getAttachmentColor(),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getAttachmentTypeLabel(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    post.attachment!.title,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.grey[400]),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _getAttachmentColor().withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              _getAttachmentIcon(),
-              color: _getAttachmentColor(),
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _getAttachmentTypeLabel(),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  post.attachment!.title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(Icons.chevron_right, color: Colors.grey[400]),
-        ],
-      ),
     );
+  }
+
+  void _navigateToAttachmentDetail(PostAttachment attachment) {
+    Widget? detailScreen;
+
+    switch (attachment.type) {
+      case PostAttachmentType.roadmap:
+        detailScreen = RoadmapAttachmentDetail(attachment: attachment);
+        break;
+      case PostAttachmentType.roadmapSection:
+        detailScreen = RoadmapSectionAttachmentDetail(attachment: attachment);
+        break;
+      case PostAttachmentType.test:
+        detailScreen = TestAttachmentDetail(attachment: attachment);
+        break;
+      case PostAttachmentType.general:
+        return;
+      default:
+        return;
+    }
+
+    // ignore: unnecessary_null_comparison
+    if (detailScreen != null) {
+      Navigator.push(context, MaterialPageRoute(builder: (_) => detailScreen!));
+    }
   }
 
   Widget _buildDivider() {

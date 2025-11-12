@@ -4,6 +4,8 @@ import 'package:paaieds/core/models/forum_post.dart';
 import 'package:paaieds/core/models/roadmap_section.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/roadmap_provider.dart';
+import 'package:paaieds/ui/screens/forum/attachment_not_found_screen.dart';
+import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 
 class RoadmapAttachmentDetail extends StatelessWidget {
@@ -18,27 +20,30 @@ class RoadmapAttachmentDetail extends StatelessWidget {
     final roadmapProvider = Provider.of<RoadmapProvider>(context);
 
     if (roadmapProvider.currentRoadmap?.id != roadmapId) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        roadmapProvider.loadRoadmap(
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        final success = await roadmapProvider.loadRoadmap(
           userId: authProvider.currentUser!.uid,
           roadmapId: roadmapId,
         );
+
+        if (!success && context.mounted) {
+          Navigator.pop(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AttachmentNotFoundScreen(attachment: attachment),
+            ),
+          );
+        }
       });
     }
 
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.close, color: Colors.grey[800]),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          'Detalles del Roadmap',
-          style: TextStyle(color: Colors.grey[800], fontSize: 18),
-        ),
+      appBar: CustomAppBar(
+        title: 'Detalles del Roadmap',
+        customIcon: Icons.arrow_back,
+        onCustomIconTap: () => Navigator.pop(context),
       ),
       body: roadmapProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
