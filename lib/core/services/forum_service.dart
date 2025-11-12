@@ -57,6 +57,7 @@ class ForumService {
   }
 
   //eliminar un post
+  //en forum_service.dart
   Future<bool> deletePost(String postId) async {
     try {
       //eliminar todas las respuestas primero
@@ -66,7 +67,7 @@ class ForumService {
           .get();
 
       for (final doc in repliesSnapshot.docs) {
-        await doc.reference.delete();
+        await doc.reference.delete(); // <-- PROBLEMA POTENCIAL
       }
 
       //eliminar el post
@@ -74,7 +75,7 @@ class ForumService {
 
       return true;
     } catch (e) {
-      return false;
+      return false; // <-- Si algo falla, devuelve false
     }
   }
 
