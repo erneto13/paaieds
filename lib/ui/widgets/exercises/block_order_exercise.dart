@@ -32,17 +32,12 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
 
     if (widget.previousAnswer != null && widget.previousAnswer!.isNotEmpty) {
       _orderedBlocks.addAll(widget.previousAnswer!.split('|'));
-      //quitar los bloques ya ordenados de disponibles
-      _availableBlocks = List<String>.from(blocks)
-        ..removeWhere((block) => _orderedBlocks.contains(block));
-    } else {
-      _availableBlocks = List<String>.from(blocks)..shuffle();
+      _availableBlocks.removeWhere((b) => _orderedBlocks.contains(b));
     }
   }
 
   void _onBlockTap(String block) {
     if (widget.isAnswered) return;
-
     setState(() {
       _orderedBlocks.add(block);
       _availableBlocks.remove(block);
@@ -51,21 +46,14 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
 
   void _onOrderedBlockTap(String block) {
     if (widget.isAnswered) return;
-
     setState(() {
       _availableBlocks.add(block);
       _orderedBlocks.remove(block);
     });
   }
 
-  void _onSubmit() {
-    final answer = _orderedBlocks.join('|');
-    widget.onAnswer(answer);
-  }
-
   void _onReset() {
     if (widget.isAnswered) return;
-
     setState(() {
       _availableBlocks.addAll(_orderedBlocks);
       _orderedBlocks.clear();
@@ -73,37 +61,45 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
     });
   }
 
+  void _onSubmit() {
+    widget.onAnswer(_orderedBlocks.join('|'));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStatement(),
-        const SizedBox(height: 24),
-
-        // Zona de bloques ordenados
-        _buildOrderedZone(),
-        const SizedBox(height: 24),
-
-        // Bloques disponibles
-        _buildAvailableBlocks(),
-        const SizedBox(height: 24),
-
-        // Botones de acción
-        _buildActionButtons(),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStatement(),
+          const SizedBox(height: 24),
+          _buildOrderedZone(),
+          const SizedBox(height: 24),
+          _buildAvailableBlocks(),
+          const SizedBox(height: 28),
+          if (!widget.isAnswered) _buildActionButtons(),
+        ],
+      ),
     );
   }
 
   Widget _buildStatement() {
-    return Text(
-      widget.exercise.statement,
-      textAlign: TextAlign.justify,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Colors.grey[900],
-        height: 1.4,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        widget.exercise.statement,
+        textAlign: TextAlign.justify,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+          color: Colors.black87,
+        ),
       ),
     );
   }
@@ -114,45 +110,39 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
       children: [
         Row(
           children: [
-            Icon(
-              Icons.check_circle_outline,
-              color: AppColors.primary,
-              size: 20,
-            ),
+            Icon(Icons.list_alt_rounded, color: AppColors.primary, size: 20),
             const SizedBox(width: 8),
             Text(
-              'Tu orden (${_orderedBlocks.length} bloques)',
-              style: TextStyle(
+              'Tu orden (${_orderedBlocks.length})',
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
+                color: Colors.black87,
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-
-        Container(
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
           width: double.infinity,
-          constraints: const BoxConstraints(minHeight: 120),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.backgroundButtom.withValues(alpha: 0.05),
+            color: Colors.grey.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.backgroundButtom.withValues(alpha: 0.2),
-              width: 2,
-              style: BorderStyle.solid,
+              color: Colors.grey.withValues(alpha: 0.3),
+              width: 1.2,
             ),
           ),
           child: _orderedBlocks.isEmpty
               ? Center(
                   child: Text(
-                    'Arrastra los bloques aquí en el orden correcto',
-                    textAlign: TextAlign.center,
+                    'Toca los bloques para ordenarlos aquí',
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey[500],
+                      color: Colors.grey[600],
                       fontStyle: FontStyle.italic,
                     ),
                   ),
@@ -160,9 +150,11 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
               : Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _orderedBlocks.asMap().entries.map((entry) {
-                    return _buildOrderedBlock(entry.value, entry.key);
-                  }).toList(),
+                  children: _orderedBlocks
+                      .asMap()
+                      .entries
+                      .map((e) => _buildOrderedBlock(e.value, e.key))
+                      .toList(),
                 ),
         ),
       ],
@@ -172,49 +164,42 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
   Widget _buildOrderedBlock(String block, int index) {
     return GestureDetector(
       onTap: () => _onOrderedBlockTap(block),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.backgroundButtom,
-          borderRadius: BorderRadius.circular(8),
+          color: AppColors.primary.withValues(alpha: 0.9),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-              color: AppColors.backgroundButtom.withValues(alpha: 0.3),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
+              color: AppColors.primary.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.backgroundButtom,
-                  ),
+            CircleAvatar(
+              radius: 11,
+              backgroundColor: Colors.white,
+              child: Text(
+                '${index + 1}',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
             const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                block,
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+            Text(
+              block,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ],
@@ -229,49 +214,57 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
       children: [
         Row(
           children: [
-            Icon(Icons.widgets_outlined, color: Colors.grey[600], size: 20),
+            Icon(Icons.widgets_outlined, color: Colors.grey[700], size: 20),
             const SizedBox(width: 8),
-            Text(
+            const Text(
               'Bloques disponibles',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
+                color: Colors.black87,
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
-
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _availableBlocks.map((block) {
-            return GestureDetector(
-              onTap: () => _onBlockTap(block),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                ),
-                child: Text(
-                  block,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey[800],
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
+          children: _availableBlocks
+              .map((b) => _buildAvailableBlock(b))
+              .toList(),
         ),
       ],
+    );
+  }
+
+  Widget _buildAvailableBlock(String block) {
+    return GestureDetector(
+      onTap: () => _onBlockTap(block),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Text(
+          block,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+      ),
     );
   }
 
@@ -286,15 +279,15 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
         Expanded(
           child: OutlinedButton.icon(
             onPressed: widget.isAnswered ? null : _onReset,
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded),
             label: const Text('Reiniciar'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey[700],
-              side: BorderSide(color: Colors.grey[400]!),
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              foregroundColor: Colors.grey[800],
+              side: BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
             ),
           ),
         ),
@@ -304,19 +297,25 @@ class _BlockOrderExerciseState extends State<BlockOrderExercise> {
           child: ElevatedButton(
             onPressed: canSubmit ? _onSubmit : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.backgroundButtom,
-              disabledBackgroundColor: Colors.grey[300],
-              padding: const EdgeInsets.symmetric(vertical: 14),
+              backgroundColor: canSubmit
+                  ? AppColors.primary
+                  : Colors.grey.withValues(alpha: 0.3),
+              elevation: canSubmit ? 3 : 0,
+              shadowColor: canSubmit
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : Colors.transparent,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
+              padding: const EdgeInsets.symmetric(vertical: 14),
             ),
             child: Text(
-              'Verificar Orden',
+              'Verificar orden',
               style: TextStyle(
-                color: canSubmit ? Colors.white : Colors.grey[500],
+                color: canSubmit ? Colors.white : Colors.grey[600],
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
               ),
             ),
           ),

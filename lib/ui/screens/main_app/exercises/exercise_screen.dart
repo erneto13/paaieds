@@ -729,57 +729,85 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   Widget _buildResultCard(ExerciseProvider provider) {
     final isCorrect = provider.isCorrectAnswer;
+    final exercise = provider.currentExercise!;
+    final feedback = exercise.feedback;
+
+    final Color mainColor = isCorrect ? Colors.green : Colors.red;
+    final Color bgColor = isCorrect
+        ? Colors.green.withValues(alpha: 0.08)
+        : Colors.red.withValues(alpha: 0.08);
 
     return FadeInUp(
       duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
       child: Container(
-        padding: const EdgeInsets.all(20),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
         decoration: BoxDecoration(
-          color: isCorrect
-              ? Colors.green.withValues(alpha: 0.1)
-              : Colors.red.withValues(alpha: 0.1),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isCorrect
-                ? Colors.green.withValues(alpha: 0.3)
-                : Colors.red.withValues(alpha: 0.3),
-            width: 2,
+            color: mainColor.withValues(alpha: 0.25),
+            width: 1.8,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: mainColor.withValues(alpha: 0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
-                color: isCorrect ? Colors.green : Colors.red,
+                color: mainColor,
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: mainColor.withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Icon(
-                isCorrect ? Icons.check : Icons.close,
+                isCorrect ? Icons.check_rounded : Icons.close_rounded,
                 color: Colors.white,
-                size: 28,
+                size: 26,
               ),
             ),
             const SizedBox(width: 16),
+            // Texto del resultado
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    isCorrect ? '¡Correcto!' : 'Incorrecto',
+                    isCorrect ? '¡Respuesta Correcta!' : 'Respuesta Incorrecta',
                     style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isCorrect ? Colors.green[800] : Colors.red[800],
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: mainColor,
+                      letterSpacing: 0.2,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    provider.currentExercise!.feedback,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[700],
-                      height: 1.4,
+                  const SizedBox(height: 6),
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    opacity: 1,
+                    child: Text(
+                      feedback,
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        color: Colors.black87,
+                        height: 1.5,
+                      ),
+                      textAlign: TextAlign.justify,
                     ),
                   ),
                 ],

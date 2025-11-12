@@ -268,6 +268,9 @@ Tipos de ejercicios a incluir:
 - Ejemplo inválido: "Correcto, elegiste la respuesta adecuada."
 - Limítate a explicar **por qué** la respuesta es válida o no, de forma objetiva y educativa.
 
+**REGLAS ESTRICTAS PARA LOS EJERCICIOS**:
+- En el statement solo describe la pregunta o instrucción, no incluyas fragmentos de código en cualquier tipo de ejercicio
+si el ejercicio es el tipo "code", incluyelo en el campo "codeSnippet".
 **Estructura JSON esperada**:
 {
   "subtopic": "nombre del tema",

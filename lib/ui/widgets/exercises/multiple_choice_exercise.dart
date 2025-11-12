@@ -26,7 +26,6 @@ class _MultipleChoiceExerciseState extends State<MultipleChoiceExercise> {
   @override
   void initState() {
     super.initState();
-    //si hay una respuesta anterior, establecerla
     _selectedOption = widget.previousAnswer;
   }
 
@@ -34,27 +33,37 @@ class _MultipleChoiceExerciseState extends State<MultipleChoiceExercise> {
   Widget build(BuildContext context) {
     final opciones = widget.exercise.data['options'] as List<dynamic>? ?? [];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStatement(),
-        const SizedBox(height: 24),
-        ...opciones.map((option) => _buildOption(option.toString())),
-        const SizedBox(height: 24),
-        if (!widget.isAnswered) _buildSubmitButton(),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStatement(),
+          const SizedBox(height: 24),
+          ...opciones.map((option) => _buildOption(option.toString())),
+          const SizedBox(height: 28),
+          if (!widget.isAnswered) _buildSubmitButton(),
+        ],
+      ),
     );
   }
 
   Widget _buildStatement() {
-    return Text(
-      widget.exercise.statement,
-      textAlign: TextAlign.justify,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Colors.grey[900],
-        height: 1.4,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        widget.exercise.statement,
+        textAlign: TextAlign.justify,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+          color: Colors.black87,
+        ),
       ),
     );
   }
@@ -64,56 +73,62 @@ class _MultipleChoiceExerciseState extends State<MultipleChoiceExercise> {
     final isDisabled = widget.isAnswered;
 
     return GestureDetector(
-      onTap: isDisabled
-          ? null
-          : () {
-              setState(() => _selectedOption = option);
-            },
+      onTap: isDisabled ? null : () => setState(() => _selectedOption = option),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.backgroundButtom.withValues(alpha: 0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected
-                ? AppColors.backgroundButtom
+                ? AppColors.primary
                 : Colors.grey.withValues(alpha: 0.3),
             width: isSelected ? 2 : 1,
           ),
+          boxShadow: [
+            if (isSelected)
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              width: 24,
-              height: 24,
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 26,
+              height: 26,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                color: isSelected ? AppColors.primary : Colors.transparent,
                 border: Border.all(
                   color: isSelected
-                      ? AppColors.backgroundButtom
-                      : Colors.grey.withValues(alpha: 0.5),
+                      ? AppColors.primary
+                      : Colors.grey.withValues(alpha: 0.4),
                   width: 2,
                 ),
-                color: isSelected
-                    ? AppColors.backgroundButtom
-                    : Colors.transparent,
               ),
               child: isSelected
                   ? const Icon(Icons.check, size: 16, color: Colors.white)
                   : null,
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: 14),
             Expanded(
               child: Text(
                 option,
                 style: TextStyle(
                   fontSize: 15,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  color: isSelected ? AppColors.deepBlue : Colors.grey[700],
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? AppColors.deepBlue : Colors.grey[800],
+                  height: 1.4,
                 ),
               ),
             ),
@@ -132,18 +147,24 @@ class _MultipleChoiceExerciseState extends State<MultipleChoiceExercise> {
       child: ElevatedButton(
         onPressed: canSubmit ? () => widget.onAnswer(_selectedOption!) : null,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.backgroundButtom,
-          disabledBackgroundColor: Colors.grey[300],
+          backgroundColor: canSubmit
+              ? AppColors.primary
+              : Colors.grey.withValues(alpha: 0.3),
+          elevation: canSubmit ? 3 : 0,
+          shadowColor: canSubmit
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : Colors.transparent,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
         child: Text(
-          'Verificar Respuesta',
+          'Verificar respuesta',
           style: TextStyle(
-            color: canSubmit ? Colors.white : Colors.grey[500],
+            color: canSubmit ? Colors.white : Colors.grey[600],
             fontSize: 16,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 0.4,
           ),
         ),
       ),

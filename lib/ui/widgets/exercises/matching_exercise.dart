@@ -25,7 +25,6 @@ class _MatchingExerciseState extends State<MatchingExercise> {
   final Map<String, String> _userMatches = {};
   String? _selectedLeft;
 
-  //colores unicos para cada match
   final List<Color> _matchColors = [
     Colors.purple,
     Colors.indigo,
@@ -40,7 +39,6 @@ class _MatchingExerciseState extends State<MatchingExercise> {
   @override
   void initState() {
     super.initState();
-    //cargar respuesta anterior si existe
     if (widget.previousAnswer != null && widget.previousAnswer!.isNotEmpty) {
       try {
         final previousMatches =
@@ -56,11 +54,9 @@ class _MatchingExerciseState extends State<MatchingExercise> {
 
   Color? _getMatchColor(String leftItem) {
     if (!_userMatches.containsKey(leftItem)) return null;
-
     final leftColumn =
         widget.exercise.data['leftColumn'] as List<dynamic>? ?? [];
     final index = leftColumn.indexOf(leftItem);
-
     if (index == -1) return null;
     return _matchColors[index % _matchColors.length];
   }
@@ -72,39 +68,46 @@ class _MatchingExerciseState extends State<MatchingExercise> {
     final rightColumn =
         widget.exercise.data['rightColumn'] as List<dynamic>? ?? [];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStatement(),
-        const SizedBox(height: 24),
-
-        _buildInstructions(),
-        const SizedBox(height: 16),
-
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: _buildLeftColumn(leftColumn)),
-            const SizedBox(width: 16),
-            Expanded(child: _buildRightColumn(rightColumn)),
-          ],
-        ),
-
-        const SizedBox(height: 24),
-        _buildActionButtons(),
-      ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildStatement(),
+          const SizedBox(height: 20),
+          _buildInstructions(),
+          const SizedBox(height: 16),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _buildLeftColumn(leftColumn)),
+              const SizedBox(width: 16),
+              Expanded(child: _buildRightColumn(rightColumn)),
+            ],
+          ),
+          const SizedBox(height: 24),
+          _buildActionButtons(),
+        ],
+      ),
     );
   }
 
   Widget _buildStatement() {
-    return Text(
-      widget.exercise.statement,
-      textAlign: TextAlign.justify,
-      style: TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.bold,
-        color: Colors.grey[900],
-        height: 1.4,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        widget.exercise.statement,
+        textAlign: TextAlign.justify,
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          height: 1.5,
+          color: Colors.black87,
+        ),
       ),
     );
   }
@@ -113,20 +116,20 @@ class _MatchingExerciseState extends State<MatchingExercise> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
+        color: AppColors.primary.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+          Icon(Icons.info_outline, color: AppColors.primary, size: 20),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              'Selecciona un elemento de la izquierda y luego su pareja de la derecha',
+              'Selecciona un elemento de la izquierda y luego su pareja de la derecha.',
               style: TextStyle(
                 fontSize: 13,
-                color: Colors.blue[900],
+                color: Colors.grey[800],
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -171,64 +174,51 @@ class _MatchingExerciseState extends State<MatchingExercise> {
           ? null
           : () {
               setState(() {
-                if (isMatched) {
-                  //si ya tiene match, quitarlo
-                  _userMatches.remove(item);
-                }
+                if (isMatched) _userMatches.remove(item);
                 _selectedLeft = isSelected ? null : item;
               });
             },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           color: isMatched
               ? matchColor!.withValues(alpha: 0.1)
               : isSelected
-              ? AppColors.backgroundButtom.withValues(alpha: 0.1)
+              ? AppColors.primary.withValues(alpha: 0.1)
               : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isMatched
                 ? matchColor!
                 : isSelected
-                ? AppColors.backgroundButtom
+                ? AppColors.primary
                 : Colors.grey.withValues(alpha: 0.3),
             width: isMatched || isSelected ? 2 : 1,
           ),
+          boxShadow: [
+            if (isSelected || isMatched)
+              BoxShadow(
+                color: AppColors.primary.withValues(alpha: 0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isMatched
-                    ? matchColor
-                    : isSelected
-                    ? AppColors.backgroundButtom
-                    : Colors.grey.withValues(alpha: 0.2),
-              ),
-              child: Center(
-                child: Icon(
-                  isMatched ? Icons.check : Icons.circle,
-                  size: 14,
-                  color: isMatched || isSelected
-                      ? Colors.white
-                      : Colors.grey[600],
-                ),
-              ),
-            ),
+            _buildCircleIcon(isMatched, isSelected, matchColor),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 item,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: isSelected || isMatched
                       ? FontWeight.w600
-                      : FontWeight.normal,
+                      : FontWeight.w400,
                   color: Colors.grey[800],
                 ),
               ),
@@ -264,7 +254,6 @@ class _MatchingExerciseState extends State<MatchingExercise> {
   }
 
   Widget _buildRightItem(String item) {
-    //verificar si este item ya fue emparejado
     final matchedWith = _userMatches.entries
         .where((entry) => entry.value == item)
         .map((entry) => entry.key)
@@ -272,7 +261,7 @@ class _MatchingExerciseState extends State<MatchingExercise> {
 
     final isMatched = matchedWith != null;
     final isDisabled = widget.isAnswered;
-    final matchColor = isMatched ? _getMatchColor(matchedWith) : null;
+    final matchColor = isMatched ? _getMatchColor(matchedWith!) : null;
 
     return GestureDetector(
       onTap: isDisabled || _selectedLeft == null
@@ -283,46 +272,40 @@ class _MatchingExerciseState extends State<MatchingExercise> {
                 _selectedLeft = null;
               });
             },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOut,
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         decoration: BoxDecoration(
           color: isMatched
               ? matchColor!.withValues(alpha: 0.1)
               : _selectedLeft != null
-              ? AppColors.backgroundButtom.withValues(alpha: 0.05)
+              ? AppColors.primary.withValues(alpha: 0.05)
               : Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isMatched ? matchColor! : Colors.grey.withValues(alpha: 0.3),
             width: isMatched ? 2 : 1,
           ),
+          boxShadow: [
+            if (isMatched)
+              BoxShadow(
+                color: matchColor!.withValues(alpha: 0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              ),
+          ],
         ),
         child: Row(
           children: [
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isMatched
-                    ? matchColor
-                    : Colors.grey.withValues(alpha: 0.2),
-              ),
-              child: Center(
-                child: Icon(
-                  isMatched ? Icons.check : Icons.circle,
-                  size: 14,
-                  color: isMatched ? Colors.white : Colors.grey[600],
-                ),
-              ),
-            ),
+            _buildCircleIcon(isMatched, false, matchColor),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
                 item,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   fontWeight: isMatched ? FontWeight.w600 : FontWeight.normal,
                   color: Colors.grey[800],
                 ),
@@ -331,6 +314,33 @@ class _MatchingExerciseState extends State<MatchingExercise> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCircleIcon(bool isMatched, bool isSelected, Color? color) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: isMatched
+            ? color
+            : isSelected
+            ? AppColors.primary
+            : Colors.transparent,
+        border: Border.all(
+          color: isMatched
+              ? color!
+              : isSelected
+              ? AppColors.primary
+              : Colors.grey.withValues(alpha: 0.4),
+          width: 2,
+        ),
+      ),
+      child: isMatched || isSelected
+          ? const Icon(Icons.check, size: 14, color: Colors.white)
+          : null,
     );
   }
 
@@ -356,10 +366,10 @@ class _MatchingExerciseState extends State<MatchingExercise> {
             label: const Text('Reiniciar'),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.grey[700],
-              side: BorderSide(color: Colors.grey[400]!),
+              side: BorderSide(color: Colors.grey.withValues(alpha: 0.4)),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
           ),
@@ -370,19 +380,25 @@ class _MatchingExerciseState extends State<MatchingExercise> {
           child: ElevatedButton(
             onPressed: canSubmit ? _onSubmit : null,
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.backgroundButtom,
-              disabledBackgroundColor: Colors.grey[300],
+              backgroundColor: canSubmit
+                  ? AppColors.primary
+                  : Colors.grey.withValues(alpha: 0.3),
+              elevation: canSubmit ? 3 : 0,
+              shadowColor: canSubmit
+                  ? AppColors.primary.withValues(alpha: 0.3)
+                  : Colors.transparent,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
             child: Text(
               'Verificar Relaciones',
               style: TextStyle(
-                color: canSubmit ? Colors.white : Colors.grey[500],
+                color: canSubmit ? Colors.white : Colors.grey[600],
                 fontSize: 16,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
               ),
             ),
           ),
@@ -392,7 +408,6 @@ class _MatchingExerciseState extends State<MatchingExercise> {
   }
 
   void _onSubmit() {
-    //convertir el mapa a string json para enviar como respuesta
     final answer = jsonEncode(_userMatches);
     widget.onAnswer(answer);
   }
