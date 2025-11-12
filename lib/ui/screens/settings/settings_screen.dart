@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:paaieds/ui/screens/auth/login_screen.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
@@ -143,6 +144,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       await Future.delayed(const Duration(milliseconds: 500));
       await authProvider.signOut();
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
     }
   }
 
