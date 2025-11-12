@@ -89,9 +89,16 @@ class _AttachmentSelectorState extends State<AttachmentSelector> {
         children: [
           _buildAttachmentOption(
             icon: Icons.map,
-            title: 'Adjuntar Roadmap',
+            title: 'Adjuntar Roadmap Completo',
             color: Colors.blue,
             onTap: () => _showRoadmapSelector(context),
+          ),
+          const SizedBox(height: 8),
+          _buildAttachmentOption(
+            icon: Icons.bookmark,
+            title: 'Adjuntar Sección de Roadmap',
+            color: Colors.indigo,
+            onTap: () => _showRoadmapSectionSelector(context),
           ),
           const SizedBox(height: 8),
           _buildAttachmentOption(
@@ -99,6 +106,13 @@ class _AttachmentSelectorState extends State<AttachmentSelector> {
             title: 'Adjuntar Test',
             color: Colors.green,
             onTap: () => _showTestSelector(context),
+          ),
+          const SizedBox(height: 8),
+          _buildAttachmentOption(
+            icon: Icons.chat_bubble_outline,
+            title: 'Discusión General',
+            color: Colors.orange,
+            onTap: () => _selectGeneralDiscussion(),
           ),
         ],
       ),
@@ -130,12 +144,14 @@ class _AttachmentSelectorState extends State<AttachmentSelector> {
               child: Icon(icon, color: color, size: 20),
             ),
             const SizedBox(width: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Colors.grey[800],
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey[800],
+                ),
               ),
             ),
           ],
@@ -158,13 +174,26 @@ class _AttachmentSelectorState extends State<AttachmentSelector> {
           Icon(Icons.check_circle, color: Colors.green, size: 20),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              attachment.title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey[800],
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _getAttachmentTypeLabel(attachment.type),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[600],
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  attachment.title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ],
             ),
           ),
           IconButton(
@@ -178,7 +207,229 @@ class _AttachmentSelectorState extends State<AttachmentSelector> {
     );
   }
 
+  String _getAttachmentTypeLabel(PostAttachmentType type) {
+    switch (type) {
+      case PostAttachmentType.roadmap:
+        return 'Roadmap completo';
+      case PostAttachmentType.roadmapSection:
+        return 'Sección de roadmap';
+      case PostAttachmentType.test:
+        return 'Test diagnóstico';
+      case PostAttachmentType.exercise:
+        return 'Ejercicio';
+      case PostAttachmentType.general:
+        return 'Discusión general';
+      case PostAttachmentType.none:
+        return 'Sin adjunto';
+    }
+  }
+
+  void _selectGeneralDiscussion() {
+    widget.onAttachmentSelected(
+      PostAttachment(
+        type: PostAttachmentType.general,
+        id: 'general',
+        title: 'Discusión General',
+        metadata: {'description': 'Tema abierto para discusión'},
+      ),
+    );
+    setState(() => _showOptions = false);
+  }
+
+  void _showRoadmapSectionSelector(BuildContext context) {
+    final roadmapProvider = Provider.of<RoadmapProvider>(
+      context,
+      listen: false,
+    );
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    if (roadmapProvider.userRoadmaps.isEmpty) {
+      roadmapProvider.loadUserRoadmaps(authProvider.currentUser!.uid);
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        padding: const EdgeInsets.all(24),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.7,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.bookmark, color: Colors.indigo, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Selecciona una Sección',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey[800],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Flexible(
+              child: Consumer<RoadmapProvider>(
+                builder: (context, provider, child) {
+                  if (provider.isLoading) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(20),
+                        child: CircularProgressIndicator(),
+                      ),
+                    );
+                  }
+
+                  if (provider.userRoadmaps.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.map_outlined,
+                              size: 48,
+                              color: Colors.grey[400],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No tienes roadmaps disponibles',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: provider.userRoadmaps.length,
+                    itemBuilder: (context, roadmapIndex) {
+                      final roadmap = provider.userRoadmaps[roadmapIndex];
+                      return ExpansionTile(
+                        leading: Icon(Icons.map, color: Colors.indigo),
+                        title: Text(
+                          roadmap.topic,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        subtitle: Text('${roadmap.sections.length} secciones'),
+                        children: roadmap.sections.map((section) {
+                          return InkWell(
+                            onTap: () {
+                              widget.onAttachmentSelected(
+                                PostAttachment(
+                                  type: PostAttachmentType.roadmapSection,
+                                  id: section.id,
+                                  title:
+                                      '${roadmap.topic} - ${section.subtopic}',
+                                  metadata: {
+                                    'roadmapId': roadmap.id,
+                                    'roadmapTopic': roadmap.topic,
+                                    'sectionId': section.id,
+                                    'subtopic': section.subtopic,
+                                    'bloomLevel': section.bloomLevel,
+                                    'description': section.description,
+                                  },
+                                ),
+                              );
+                              Navigator.pop(context);
+                              setState(() => _showOptions = false);
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 4,
+                              ),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.indigo.withValues(alpha: 0.05),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.indigo.withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.bookmark_outline,
+                                    color: Colors.indigo,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          section.subtopic,
+                                          style: TextStyle(
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.grey[800],
+                                          ),
+                                        ),
+                                        Text(
+                                          section.bloomLevel,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  if (section.completed)
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: 16,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showRoadmapSelector(BuildContext context) {
+    // Código existente para seleccionar roadmap completo
     final roadmapProvider = Provider.of<RoadmapProvider>(
       context,
       listen: false,
@@ -344,6 +595,7 @@ class _AttachmentSelectorState extends State<AttachmentSelector> {
   }
 
   void _showTestSelector(BuildContext context) {
+    // Código existente para seleccionar tests
     final historyProvider = Provider.of<HistoryProvider>(
       context,
       listen: false,

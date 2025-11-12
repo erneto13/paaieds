@@ -176,7 +176,7 @@ class ForumPostCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[900],
                       ),
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ],
@@ -201,8 +201,12 @@ class ForumPostCard extends StatelessWidget {
     switch (attachment.type) {
       case PostAttachmentType.roadmap:
         return _buildRoadmapMetadata(metadata);
+      case PostAttachmentType.roadmapSection:
+        return _buildRoadmapSectionMetadata(metadata);
       case PostAttachmentType.test:
         return _buildTestMetadata(metadata);
+      case PostAttachmentType.general:
+        return _buildGeneralMetadata(metadata);
       default:
         return const SizedBox.shrink();
     }
@@ -239,6 +243,65 @@ class ForumPostCard extends StatelessWidget {
               label: 'Progreso',
               value: '${progress.toInt()}%',
               color: _getProgressColor(progress),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRoadmapSectionMetadata(Map<String, dynamic> metadata) {
+    final bloomLevel = metadata['bloomLevel'] as String? ?? 'N/A';
+    final roadmapTopic = metadata['roadmapTopic'] as String? ?? '';
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.map_outlined, size: 14, color: Colors.indigo),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  'De: $roadmapTopic',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.grey[700],
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.indigo.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.bookmark, size: 14, color: Colors.indigo),
+                const SizedBox(width: 6),
+                Text(
+                  bloomLevel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.indigo,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -309,6 +372,34 @@ class ForumPostCard extends StatelessWidget {
     );
   }
 
+  Widget _buildGeneralMetadata(Map<String, dynamic> metadata) {
+    final description = metadata['description'] as String? ?? 'Tema abierto';
+
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.forum, size: 16, color: Colors.orange),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              description,
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.grey[700],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMetadataItem({
     required IconData icon,
     required String label,
@@ -366,9 +457,13 @@ class ForumPostCard extends StatelessWidget {
     switch (post.attachment!.type) {
       case PostAttachmentType.roadmap:
         return Colors.blue;
+      case PostAttachmentType.roadmapSection:
+        return Colors.indigo;
       case PostAttachmentType.test:
         return Colors.green;
       case PostAttachmentType.exercise:
+        return Colors.orange;
+      case PostAttachmentType.general:
         return Colors.orange;
       case PostAttachmentType.none:
         return Colors.grey;
@@ -379,10 +474,14 @@ class ForumPostCard extends StatelessWidget {
     switch (post.attachment!.type) {
       case PostAttachmentType.roadmap:
         return Icons.map;
+      case PostAttachmentType.roadmapSection:
+        return Icons.bookmark;
       case PostAttachmentType.test:
         return Icons.quiz;
       case PostAttachmentType.exercise:
         return Icons.fitness_center;
+      case PostAttachmentType.general:
+        return Icons.chat_bubble_outline;
       case PostAttachmentType.none:
         return Icons.attachment;
     }
@@ -391,11 +490,15 @@ class ForumPostCard extends StatelessWidget {
   String _getAttachmentTypeLabel() {
     switch (post.attachment!.type) {
       case PostAttachmentType.roadmap:
-        return 'Roadmap adjunto';
+        return 'Roadmap completo';
+      case PostAttachmentType.roadmapSection:
+        return 'Sección de roadmap';
       case PostAttachmentType.test:
-        return 'Test adjunto';
+        return 'Test diagnóstico';
       case PostAttachmentType.exercise:
-        return 'Ejercicio adjunto';
+        return 'Ejercicio';
+      case PostAttachmentType.general:
+        return 'Discusión general';
       case PostAttachmentType.none:
         return 'Adjunto';
     }

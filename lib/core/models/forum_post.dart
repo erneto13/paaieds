@@ -1,6 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum PostAttachmentType { roadmap, test, exercise, none }
+enum PostAttachmentType {
+  roadmap,
+  roadmapSection,
+  test,
+  exercise,
+  general,
+  none,
+}
 
 class PostAttachment {
   final PostAttachmentType type;
@@ -30,11 +37,17 @@ class PostAttachment {
       case 'roadmap':
         type = PostAttachmentType.roadmap;
         break;
+      case 'roadmapSection':
+        type = PostAttachmentType.roadmapSection;
+        break;
       case 'test':
         type = PostAttachmentType.test;
         break;
       case 'exercise':
         type = PostAttachmentType.exercise;
+        break;
+      case 'general':
+        type = PostAttachmentType.general;
         break;
       default:
         type = PostAttachmentType.none;

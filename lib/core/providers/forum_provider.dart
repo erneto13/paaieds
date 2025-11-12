@@ -124,7 +124,7 @@ class ForumProvider extends ChangeNotifier {
             },
             onError: (error) {
               _errorMessage = 'Error al cargar respuestas: $error';
-              _isLoading = false; //y también aquí en caso de error
+              _isLoading = false;
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 notifyListeners();
               });
