@@ -2,11 +2,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/ui/widgets/util/custom_app_bar.dart';
-import 'package:paaieds/ui/widgets/util/custom_bottom_bar.dart';
 import 'package:paaieds/ui/widgets/util/custom_text_field.dart';
+import 'package:paaieds/ui/widgets/util/snackbar.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -25,7 +26,6 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final ImagePicker _picker = ImagePicker();
-
   File? _profileImage;
   bool _isEditing = false;
 
@@ -36,7 +36,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   void initState() {
     super.initState();
-    //obtenemos el usuario del provider para inicializar los controllers
     final user = Provider.of<AuthProvider>(context, listen: false).currentUser;
     _firstNameController = TextEditingController(text: user?.firstName ?? '');
     _lastNameController = TextEditingController(text: user?.lastName ?? '');
@@ -66,7 +65,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
       }
     } catch (e) {
-      _showSnackBar('Error al seleccionar imagen', isError: true);
+      if (!mounted) return;
+
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error al seleccionar imagen',
+        description: 'No se pudo cargar la imagen seleccionada',
+      );
     }
   }
 
@@ -75,11 +80,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final lastName = _lastNameController.text.trim();
 
     if (firstName.isEmpty || lastName.isEmpty) {
-      _showSnackBar('Por favor completa todos los campos', isError: true);
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Campos incompletos',
+        description: 'Por favor completa todos los campos',
+      );
       return;
     }
 
-    //usamos el authprovider para actualizar el perfil
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     final success = await authProvider.updateProfile(
@@ -95,170 +103,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _isEditing = false;
         _profileImage = null;
       });
-      _showSnackBar('Perfil actualizado exitosamente');
+      CustomSnackbar.showSuccess(
+        context: context,
+        message: 'Perfil actualizado',
+        description: 'Tu información se ha actualizado correctamente',
+      );
     } else {
-      _showSnackBar(
-        authProvider.errorMessage ?? 'Error al actualizar perfil',
-        isError: true,
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error al actualizar',
+        description: authProvider.errorMessage ?? 'Intenta más tarde',
       );
     }
-  }
-
-  Future<void> _showChangePasswordDialog() async {
-    final currentPasswordController = TextEditingController();
-    final newPasswordController = TextEditingController();
-    final confirmPasswordController = TextEditingController();
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cambiar contraseña'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: currentPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Contraseña actual',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: newPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Nueva contraseña',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: confirmPasswordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Confirmar nueva contraseña',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final current = currentPasswordController.text;
-              final newPass = newPasswordController.text;
-              final confirm = confirmPasswordController.text;
-
-              if (current.isEmpty || newPass.isEmpty || confirm.isEmpty) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Completa todos los campos'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-
-              if (newPass.length < 6) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'La contraseña debe tener al menos 6 caracteres',
-                    ),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-
-              if (newPass != confirm) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Las contraseñas no coinciden'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-                return;
-              }
-
-              Navigator.pop(context, true);
-            },
-            child: const Text('Cambiar'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-
-      final success = await authProvider.changePassword(
-        currentPassword: currentPasswordController.text,
-        newPassword: newPasswordController.text,
-      );
-
-      if (!mounted) return;
-
-      if (success) {
-        _showSnackBar('Contraseña actualizada exitosamente');
-      } else {
-        _showSnackBar(
-          authProvider.errorMessage ??
-              'Error al cambiar contraseña. Verifica tu contraseña actual',
-          isError: true,
-        );
-      }
-    }
-
-    currentPasswordController.dispose();
-    newPasswordController.dispose();
-    confirmPasswordController.dispose();
   }
 
   Future<void> _handleLogout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cerrar sesión'),
-        content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Cerrar sesión'),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (context) => MinimalConfirmDialog(
+        title: 'Cerrar sesión',
+        content: '¿Estás seguro de que deseas cerrar sesión?',
+        onConfirm: () {
+          Navigator.pop(context, true);
+        },
       ),
     );
+
+    if (!mounted) return;
 
     if (confirm == true) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.signOut();
-      //el authwrapper redirigira automaticamente al login
-    }
-  }
 
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red : Colors.green,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+      CustomSnackbar.showInfo(
+        context: context,
+        message: 'Cerrando sesión...',
+        description: 'Hasta pronto',
+      );
+
+      await Future.delayed(const Duration(milliseconds: 500));
+      await authProvider.signOut();
+    }
   }
 
   @override
@@ -268,14 +153,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         final currentUser = authProvider.currentUser;
 
         return Scaffold(
-          appBar: CustomAppBar(title: "Ajustes", onProfileTap: () {}),
-          backgroundColor: Colors.white10,
+          appBar: CustomAppBar(
+            title: "Ajustes",
+            isIcon: false,
+            customIcon: Icons.arrow_back,
+            onCustomIconTap: () => Navigator.pop(context),
+          ),
+          backgroundColor: Colors.white,
           body: SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildProfileSection(currentUser, authProvider.isLoading),
+                  _buildProfileSection(currentUser),
                   const SizedBox(height: 30),
                   if (_isEditing) ...[
                     _buildEditForm(authProvider.isLoading),
@@ -290,17 +181,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          bottomNavigationBar: CustomBottomNavBar(
-            currentIndex: widget.currentIndex,
-            onTap: widget.onNavBarTap,
-          ),
         );
       },
     );
   }
 
-  Widget _buildProfileSection(dynamic currentUser, bool isLoading) {
-    return Column(
+  /// 🧑‍💼 Nueva versión tipo "perfil de red social"
+  Widget _buildProfileSection(dynamic currentUser) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Stack(
           children: [
@@ -328,57 +217,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
           ],
         ),
-        const SizedBox(height: 16),
-        Text(
-          currentUser?.displayName ?? 'Usuario',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: AppColors.deepBlue,
+        const SizedBox(width: 20),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                currentUser?.displayName ?? 'Usuario',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.deepBlue,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                currentUser?.email ?? '',
+                style: TextStyle(fontSize: 15, color: Colors.grey[700]),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          currentUser?.email ?? '',
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
         ),
       ],
     );
   }
 
   Widget _buildProfileImage(dynamic currentUser) {
-    //si hay una imagen seleccionada localmente
     if (_profileImage != null) {
       return CircleAvatar(
-        radius: 60,
+        radius: 55,
         backgroundImage: FileImage(_profileImage!),
       );
     }
 
-    //si el usuario tiene una foto en firestore
     if (currentUser?.photoURL != null && currentUser!.photoURL!.isNotEmpty) {
       return CircleAvatar(
-        radius: 60,
+        radius: 55,
         backgroundColor: AppColors.lightBlue.withValues(alpha: 0.3),
         child: ClipOval(
           child: CachedNetworkImage(
             imageUrl: currentUser.photoURL!,
-            width: 120,
-            height: 120,
+            width: 110,
+            height: 110,
             fit: BoxFit.cover,
             placeholder: (context, url) => const CircularProgressIndicator(),
             errorWidget: (context, url, error) =>
-                Icon(Icons.person, size: 60, color: AppColors.deepBlue),
+                Icon(Icons.person, size: 55, color: AppColors.deepBlue),
           ),
         ),
       );
     }
 
-    //avatar por defecto
     return CircleAvatar(
-      radius: 60,
+      radius: 55,
       backgroundColor: AppColors.lightBlue.withValues(alpha: 0.3),
-      child: Icon(Icons.person, size: 60, color: AppColors.deepBlue),
+      child: Icon(Icons.person, size: 55, color: AppColors.deepBlue),
     );
   }
 
@@ -473,24 +366,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.lightBlue.withValues(alpha: 0.3)),
+        color: const Color(0xFFF9FAFB), // Fondo gris claro y suave
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildInfoRow(
             icon: Icons.person,
             label: 'Nombre completo',
             value: currentUser?.displayName ?? 'N/A',
           ),
-          const Divider(height: 24),
+          const SizedBox(height: 16),
           _buildInfoRow(
             icon: Icons.email,
             label: 'Correo electrónico',
             value: currentUser?.email ?? 'N/A',
           ),
-          const Divider(height: 24),
+          const SizedBox(height: 16),
           _buildInfoRow(
             icon: Icons.verified_user,
             label: 'Proveedor',
@@ -539,35 +432,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSettingsOptions() {
     return Column(
       children: [
-        _buildOptionCard(
+        _buildOptionItem(
           icon: Icons.edit,
           title: 'Editar perfil',
           subtitle: 'Actualiza tu información personal',
           onTap: () => setState(() => _isEditing = true),
           color: AppColors.oceanBlue,
         ),
-        const SizedBox(height: 12),
-        _buildOptionCard(
-          icon: Icons.lock_outline,
-          title: 'Cambiar contraseña',
-          subtitle: 'Actualiza tu contraseña',
-          onTap: _showChangePasswordDialog,
-          color: AppColors.skyBlue,
-        ),
-        const SizedBox(height: 24),
-        _buildOptionCard(
+        const SizedBox(height: 20),
+        _buildCreditsSection(),
+        const SizedBox(height: 30),
+        _buildOptionItem(
           icon: Icons.logout,
           title: 'Cerrar sesión',
           subtitle: 'Salir de tu cuenta',
           onTap: _handleLogout,
-          color: Colors.red,
+          color: Colors.redAccent,
           isDestructive: true,
         ),
       ],
     );
   }
 
-  Widget _buildOptionCard({
+  Widget _buildOptionItem({
     required IconData icon,
     required String title,
     required String subtitle,
@@ -575,26 +462,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required Color color,
     bool isDestructive = false,
   }) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isDestructive
-                ? Colors.red.withValues(alpha: 0.3)
-                : AppColors.lightBlue.withValues(alpha: 0.3),
-          ),
-        ),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 24),
             ),
@@ -608,13 +487,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: isDestructive ? Colors.red : Colors.grey[800],
+                      color: isDestructive
+                          ? Colors.redAccent
+                          : AppColors.deepBlue,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF6B7280),
+                      height: 1.2,
+                    ),
                   ),
                 ],
               ),
@@ -622,6 +507,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Icon(Icons.chevron_right, color: Colors.grey[400]),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCreditsSection() {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 12),
+      decoration: BoxDecoration(
+        color: AppColors.lightBlue.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          SizedBox(height: 8),
+          Text(
+            'Hecho con ❤️ por el equipo de PAAIEDS',
+            style: TextStyle(
+              fontSize: 14,
+              color: Color(0xFF4B5563),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: 4),
+          Text(
+            'Versión 1.0.0',
+            style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+          ),
+        ],
       ),
     );
   }

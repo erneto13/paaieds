@@ -6,6 +6,7 @@ import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/forum_provider.dart';
 import 'package:paaieds/ui/screens/forum/forum_post_detail_screen.dart';
+import 'package:paaieds/ui/screens/settings/settings_screen.dart';
 import 'package:paaieds/ui/widgets/forum/forum_post_card.dart';
 import 'package:paaieds/ui/widgets/forum/forum_post_modal.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
@@ -138,13 +139,28 @@ class _ForumScreenState extends State<ForumScreen> {
     );
   }
 
+  void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsScreen(
+          onNavBarTap: widget.onNavBarTap,
+          currentIndex: widget.currentIndex,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final currentUser = authProvider.currentUser;
 
     return Scaffold(
-      appBar: CustomAppBar(title: "Foro Comunitario", onProfileTap: () {}),
+      appBar: CustomAppBar(
+        title: "Foro Comunitario",
+        onProfileTap: _navigateToSettings,
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Consumer<ForumProvider>(

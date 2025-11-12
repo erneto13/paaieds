@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:paaieds/ui/screens/settings/settings_screen.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
 import 'package:paaieds/ui/widgets/roadmap/roadmap_card.dart';
 import 'package:paaieds/ui/widgets/util/snackbar.dart';
@@ -47,10 +48,25 @@ class _RoadmapsListScreenState extends State<RoadmapsListScreen> {
     });
   }
 
+  void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsScreen(
+          onNavBarTap: widget.onNavBarTap,
+          currentIndex: widget.currentIndex,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(title: "Mis Roadmaps", onProfileTap: () {}),
+      appBar: CustomAppBar(
+        title: "Mis Roadmaps",
+        onProfileTap: _navigateToSettings,
+      ),
       backgroundColor: Colors.white,
       body: Consumer<RoadmapProvider>(
         builder: (context, roadmapProvider, child) {

@@ -54,7 +54,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: GestureDetector(
-                  onTap: isIcon ? onProfileTap : onCustomIconTap,
+                  onTap: onProfileTap ?? onCustomIconTap,
                   child: isIcon
                       ? CircleAvatar(
                           radius: 18,

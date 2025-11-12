@@ -4,6 +4,7 @@ import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
 import 'package:paaieds/core/providers/test_provider.dart';
 import 'package:paaieds/ui/screens/main_app/etests/test_screen.dart';
+import 'package:paaieds/ui/screens/settings/settings_screen.dart';
 import 'package:paaieds/ui/widgets/test/test_history_section.dart';
 import 'package:paaieds/ui/widgets/test/test_preview_card.dart';
 import 'package:provider/provider.dart';
@@ -118,6 +119,18 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
     });
   }
 
+  void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SettingsScreen(
+          onNavBarTap: widget.onNavBarTap ?? (_) {},
+          currentIndex: widget.currentIndex ?? 0,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -126,7 +139,7 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         title: "Hola, ${user?.displayName ?? 'Usuario'}",
-        onProfileTap: () {},
+        onProfileTap: _navigateToSettings,
       ),
       backgroundColor: Colors.white,
       body: SafeArea(
