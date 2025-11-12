@@ -262,6 +262,14 @@ Genera los ejercicios ahora.
 
 ---
 
+### Instrucciones:
+1. Si el tema es sobre **Angular**, usa **Angular 20 o superior**.  
+   - Usa terminología, sintaxis, y características reales de Angular 20 (Standalone Components, Signals, deferred loading, control flow syntax, etc.).
+   - No menciones versiones anteriores.
+   - Si dudas, responde como si Angular 20 fuera la versión actual estable.
+
+---
+
 **🚫 REGLAS CRÍTICAS SOBRE CÓDIGO EN EL STATEMENT 🚫**
 
 LEE ESTO CUIDADOSAMENTE Y SÍGUELO AL PIE DE LA LETRA:

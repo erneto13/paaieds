@@ -64,13 +64,48 @@ class TestProvider extends ChangeNotifier {
   String _buildPrompt(String topic) {
     return '''
 Genera un cuestionario en formato JSON sobre "$topic".
-Debe tener entre 8 y 10 preguntas.
-La estructura del JSON debe ser un objeto con una clave "preguntas" que contenga una lista de objetos.
-Cada objeto de pregunta debe tener:
-- "question": texto de la pregunta
-- "options": lista de 4 respuestas posibles
-- "answer": la respuesta correcta
-No agregues texto adicional fuera del JSON. La respuesta debe ser únicamente el JSON.
+
+### Reglas:
+- Debe tener entre 8 y 10 preguntas.
+- La estructura del JSON debe ser:
+{
+  "preguntas": [
+    {
+      "question": "texto de la pregunta",
+      "options": ["opción A", "opción B", "opción C", "opción D"],
+      "answer": "opción correcta"
+    }
+  ]
+}
+
+### Instrucciones:
+1. **NO agregues texto fuera del JSON.**
+2. Si el tema es sobre **Angular**, usa **Angular 20 o superior**.  
+   - Usa terminología, sintaxis, y características reales de Angular 20 (Standalone Components, Signals, deferred loading, control flow syntax, etc.).
+   - No menciones versiones anteriores.
+   - Si dudas, responde como si Angular 20 fuera la versión actual estable.
+3. Si el tema NO es de código (por ejemplo, lógica, matemáticas o teoría), no incluyas ejemplos de código ni preguntas de programación.
+4. Las preguntas deben ser variadas, claras y con una sola respuesta correcta.
+5. Todas las opciones deben ser plausibles.
+6. No uses markdown ni formato adicional.
+7. Si el tema es muy amplio, enfócate en aspectos fundamentales y comunes.
+8. Si el tema es de programación, NO agregues bloques de código en las preguntas.
+
+### Ejemplo de salida esperada:
+{
+  "preguntas": [
+    {
+      "question": "¿Qué característica introdujo Angular 20 relacionada con la detección de cambios?",
+      "options": [
+        "Zone.js",
+        "Signals",
+        "NgZone",
+        "Two-way binding"
+      ],
+      "answer": "Signals"
+    }
+  ]
+}
 ''';
   }
 

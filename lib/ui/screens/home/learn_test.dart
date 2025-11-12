@@ -62,7 +62,6 @@ class _LearnTestScreenState extends State<LearnTestScreen> {
 
     final testProvider = Provider.of<TestProvider>(context, listen: false);
 
-    // ✅ IMPORTANTE: Limpiar estado previo antes de generar nuevo test
     testProvider.reset();
 
     final success = await testProvider.generateTest(topic);

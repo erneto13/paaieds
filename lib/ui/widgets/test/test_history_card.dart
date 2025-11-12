@@ -6,6 +6,7 @@ import 'package:paaieds/core/models/test_results.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
 import 'package:paaieds/core/providers/history_provider.dart';
 import 'package:paaieds/ui/widgets/util/confirm_dialog.dart';
+import 'package:paaieds/ui/widgets/util/snackbar.dart';
 import 'package:paaieds/util/string_formatter.dart';
 import 'package:provider/provider.dart';
 
@@ -111,16 +112,17 @@ class TestHistoryCard extends StatelessWidget {
               );
 
               if (success && context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Diagnóstico y roadmap eliminados'),
-                  ),
+                CustomSnackbar.showSuccess(
+                  context: context,
+                  message: 'Diagnóstico y roadmap eliminados',
+                  description: 'El diagnóstico y roadmap han sido eliminados',
                 );
               } else if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Error al eliminar diagnóstico'),
-                  ),
+                CustomSnackbar.showError(
+                  context: context,
+                  message: 'Error al eliminar',
+                  description:
+                      'No se pudo eliminar el diagnóstico. Intenta más tarde.',
                 );
               }
             },

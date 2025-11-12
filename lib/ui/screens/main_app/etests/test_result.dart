@@ -96,63 +96,75 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
     final correct = widget.evaluationResults['correctAnswers'] as int;
     final total = widget.evaluationResults['totalQuestions'] as int;
 
+    final levelColor = _getLevelColor(level);
+
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Stack(
         children: [
           Scaffold(
-            backgroundColor: Colors.white,
+            backgroundColor: Colors.grey[50],
             appBar: RoadmapAppBar(
               topic: 'Resultados del Diagnóstico',
               level: 'sobre ${widget.topic.toTitleCase()}',
-              onClose: () => _isLoading
-                  ? null
-                  : () async {
-                      final shouldPop = await _onWillPop();
-                      if (shouldPop && mounted) {
-                        Navigator.of(context).pop();
-                      }
-                    },
+              onClose: () async {
+                if (_isLoading) return;
+                final shouldPop = await _onWillPop();
+                if (shouldPop && mounted) Navigator.of(context).pop();
+              },
             ),
             body: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     Expanded(
                       child: SingleChildScrollView(
                         child: Column(
                           children: [
+                            const SizedBox(height: 24),
                             FadeInDown(
                               duration: const Duration(milliseconds: 400),
-                              child: _buildSuccessIcon(),
+                              child: _buildSuccessIcon(levelColor),
                             ),
                             const SizedBox(height: 24),
                             FadeInDown(
                               duration: const Duration(milliseconds: 500),
                               child: Text(
                                 '¡Diagnóstico Completado!',
-                                style: TextStyle(
-                                  fontSize: 24,
+                                style: const TextStyle(
+                                  fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent,
+                                  color: Color(0xFF111827),
                                 ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Has completado tu evaluación sobre ${widget.topic.toTitleCase()}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF6B7280),
+                                height: 1.4,
                               ),
                             ),
                             const SizedBox(height: 40),
                             FadeInUp(
                               duration: const Duration(milliseconds: 700),
-                              child: _buildLevelCard(level, percentage),
+                              child: _buildLevelDisplay(level, percentage),
                             ),
                             const SizedBox(height: 24),
                             FadeInUp(
                               duration: const Duration(milliseconds: 800),
-                              child: _buildStatsCard(correct, total),
+                              child: _buildStatsRow(correct, total),
                             ),
                             const SizedBox(height: 24),
                             FadeInUp(
                               duration: const Duration(milliseconds: 900),
-                              child: _buildRecommendationCard(level),
+                              child: _buildRecommendation(level),
                             ),
                           ],
                         ),
@@ -169,6 +181,7 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
             ),
           ),
 
+          // Loading overlay con GIF
           if (_isLoading)
             Positioned.fill(
               child: Container(
@@ -191,180 +204,155 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
     );
   }
 
-  Widget _buildSuccessIcon() {
+  Color _getLevelColor(String level) {
+    switch (level) {
+      case 'Básico':
+        return Colors.orange;
+      case 'Intermedio':
+        return Colors.blueAccent;
+      case 'Avanzado':
+        return Colors.green;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  Widget _buildSuccessIcon(Color levelColor) {
     return Container(
       width: 100,
       height: 100,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.blueAccent.shade100.withValues(alpha: 0.2),
+        color: levelColor.withValues(alpha: 0.1),
       ),
-      child: const Icon(Icons.check_circle, size: 60, color: Colors.blueAccent),
+      child: Icon(Icons.check_circle_rounded, size: 60, color: levelColor),
     );
   }
 
-  Widget _buildLevelCard(String level, double percentage) {
-    Color levelColor;
-    IconData levelIcon;
+  Widget _buildLevelDisplay(String level, double percentage) {
+    final levelColor = _getLevelColor(level);
+    final levelIcon = switch (level) {
+      'Básico' => Icons.trending_up,
+      'Intermedio' => Icons.star_half,
+      'Avanzado' => Icons.star_rounded,
+      _ => Icons.help_outline,
+    };
 
-    switch (level) {
-      case 'Básico':
-        levelColor = Colors.orange;
-        levelIcon = Icons.trending_up;
-        break;
-      case 'Intermedio':
-        levelColor = Colors.blue;
-        levelIcon = Icons.star_half;
-        break;
-      case 'Avanzado':
-        levelColor = Colors.green;
-        levelIcon = Icons.star;
-        break;
-      default:
-        levelColor = Colors.grey;
-        levelIcon = Icons.help;
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [levelColor, levelColor],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Column(
+      children: [
+        Icon(levelIcon, color: levelColor, size: 40),
+        const SizedBox(height: 8),
+        Text(
+          'Nivel: $level',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: levelColor,
+          ),
         ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: levelColor.withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(levelIcon, size: 48, color: Colors.white),
-          const SizedBox(height: 16),
-          Text(
-            'Nivel: $level',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${percentage.toStringAsFixed(1)}% de dominio',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withValues(alpha: 0.9),
-            ),
-          ),
-        ],
-      ),
+        const SizedBox(height: 4),
+        Text(
+          '${percentage.toStringAsFixed(1)}% de dominio',
+          style: const TextStyle(fontSize: 15, color: Color(0xFF4B5563)),
+        ),
+      ],
     );
   }
 
-  Widget _buildStatsCard(int correct, int total) {
+  Widget _buildStatsRow(int correct, int total) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: Colors.grey[300]!),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildStatItem(
-            icon: Icons.check_circle_outline,
-            label: 'Correctas',
-            value: correct.toString(),
-            color: Colors.green,
+            Icons.check_circle_outline,
+            'Correctas',
+            correct.toString(),
+            Colors.green,
           ),
-          Container(width: 1, height: 40, color: Colors.grey[400]),
+          Container(width: 1, height: 36, color: Colors.grey[300]),
           _buildStatItem(
-            icon: Icons.quiz,
-            label: 'Total',
-            value: total.toString(),
-            color: Colors.blue,
+            Icons.quiz_outlined,
+            'Total',
+            total.toString(),
+            Colors.blueAccent,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
+  Widget _buildStatItem(
+    IconData icon,
+    String label,
+    String value,
+    Color color,
+  ) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 32),
-        const SizedBox(height: 8),
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 6),
         Text(
           value,
           style: const TextStyle(
-            fontSize: 24,
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: Color(0xFF111827),
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+        ),
       ],
     );
   }
 
-  Widget _buildRecommendationCard(String level) {
-    String recommendation;
-    IconData icon;
-
-    switch (level) {
-      case 'Básico':
-        recommendation =
-            'Comenzaremos desde los fundamentos para construir una base sólida.';
-        icon = Icons.school;
-        break;
-      case 'Intermedio':
-        recommendation =
-            'Reforzaremos conceptos clave y profundizaremos en temas avanzados.';
-        icon = Icons.trending_up;
-        break;
-      case 'Avanzado':
-        recommendation =
-            'Nos enfocaremos en casos de uso complejos y mejores prácticas.';
-        icon = Icons.rocket_launch;
-        break;
-      default:
-        recommendation = 'Crearemos un plan de aprendizaje personalizado.';
-        icon = Icons.map;
-    }
+  Widget _buildRecommendation(String level) {
+    final (icon, text) = switch (level) {
+      'Básico' => (
+        Icons.school_rounded,
+        'Comenzaremos desde los fundamentos para construir una base sólida.',
+      ),
+      'Intermedio' => (
+        Icons.trending_up_rounded,
+        'Reforzaremos conceptos clave y profundizaremos en temas avanzados.',
+      ),
+      'Avanzado' => (
+        Icons.rocket_launch_rounded,
+        'Nos enfocaremos en casos complejos y mejores prácticas.',
+      ),
+      _ => (
+        Icons.map_rounded,
+        'Crearemos un plan de aprendizaje personalizado.',
+      ),
+    };
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.blue.shade50,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.blue.shade200),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 32, color: Colors.blueAccent),
-          const SizedBox(width: 16),
+          Icon(icon, size: 28, color: Colors.blueAccent),
+          const SizedBox(width: 14),
           Expanded(
             child: Text(
-              recommendation,
-              style: TextStyle(
+              text,
+              style: const TextStyle(
                 fontSize: 14,
-                color: Colors.grey[800],
-                height: 1.4,
+                color: Color(0xFF374151),
+                height: 1.5,
               ),
             ),
           ),
@@ -383,22 +371,21 @@ class _TestResultsScreenState extends State<TestResultsScreen> {
             : _handleGenerateRoadmap,
         style: ElevatedButton.styleFrom(
           backgroundColor: _roadmapGenerated ? Colors.grey : Colors.blueAccent,
-          elevation: 4,
-          shadowColor: Colors.blueAccent.withValues(alpha: 0.4),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
+          elevation: 0,
         ),
         icon: Icon(
-          _roadmapGenerated ? Icons.check : Icons.map,
+          _roadmapGenerated ? Icons.check_circle_outline : Icons.map_rounded,
           color: Colors.white,
         ),
         label: Text(
-          _roadmapGenerated ? 'Roadmap Generado' : 'Generar Mi Roadmap',
+          _roadmapGenerated ? 'Roadmap Generado' : 'Generar mi Roadmap',
           style: const TextStyle(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
             fontSize: 16,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
