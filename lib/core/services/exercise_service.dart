@@ -260,6 +260,14 @@ Tipos de ejercicios a incluir:
 3. code: Analizar un fragmento de código y seleccionar cuál será su salida/resultado.
 4. matching: Relacionar funciones o conceptos de programación con sus descripciones o usos correctos.
 
+**REGLAS ESTRICTAS PARA EL FEEDBACK**:
+- No uses palabras como: "Correcto", "Incorrecto", "Bien hecho", "Excelente", "Fallaste", "Respuesta correcta", "Respuesta incorrecta" ni sinónimos.
+- El feedback debe ser **solo una explicación breve y neutral** basada en la teoría o el razonamiento detrás de la respuesta.
+- No evalúes el desempeño del estudiante ni uses expresiones de aprobación o desaprobación.
+- Ejemplo válido: "La opción elegida refleja el concepto principal descrito en la teoría."
+- Ejemplo inválido: "Correcto, elegiste la respuesta adecuada."
+- Limítate a explicar **por qué** la respuesta es válida o no, de forma objetiva y educativa.
+
 **Estructura JSON esperada**:
 {
   "subtopic": "nombre del tema",
@@ -315,6 +323,14 @@ Tipos de ejercicios a incluir:
 1. **multiple_choice**: Preguntas con 4 opciones, una correcta.
 2. **block_order**: Ordenar conceptos, pasos o elementos en el orden correcto.
 3. **matching**: Relacionar elementos de una columna con elementos de otra columna.
+
+**REGLAS ESTRICTAS PARA EL FEEDBACK**:
+- No uses palabras como: "Correcto", "Incorrecto", "Bien hecho", "Excelente", "Fallaste", "Respuesta correcta", "Respuesta incorrecta" ni sinónimos.
+- El feedback debe ser **solo una explicación breve y neutral** basada en la teoría o el razonamiento detrás de la respuesta.
+- No evalúes el desempeño del estudiante ni uses expresiones de aprobación o desaprobación.
+- Ejemplo válido: "La opción elegida refleja el concepto principal descrito en la teoría."
+- Ejemplo inválido: "Correcto, elegiste la respuesta adecuada."
+- Limítate a explicar **por qué** la respuesta es válida o no, de forma objetiva y educativa.
 
 **Estructura JSON esperada**:
 {

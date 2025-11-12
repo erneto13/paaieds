@@ -481,7 +481,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _buildBody(ExerciseProvider provider) {
-    if (provider.isSectionAlreadyCompleted) {
+    if (provider.isSectionAlreadyCompleted && _theoryShown) {
       return SingleChildScrollView(child: _buildCompletedBanner(provider));
     }
 
