@@ -530,17 +530,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           SizedBox(height: 8),
           Text(
-            'Hecho con ❤️ por el equipo de PAAIEDS',
+            'Trabajo de tesis desarrollado por:',
             style: TextStyle(
               fontSize: 14,
               color: Color(0xFF4B5563),
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.bold,
             ),
             textAlign: TextAlign.center,
           ),
+          SizedBox(height: 3),
+          Text(
+            'Ernesto Amaral Espinoza y \nBryan Daniel Negrete Arce',
+            style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
+          ),
           SizedBox(height: 4),
           Text(
-            'Versión 1.0.0',
+            'FIM UAS - 2025',
             style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
           ),
         ],
