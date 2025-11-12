@@ -50,7 +50,12 @@ class MinimalConfirmDialog extends StatelessWidget {
                         height: 40,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 25, 122, 213).withValues(alpha: 0.1),
+                          color: const Color.fromARGB(
+                            255,
+                            25,
+                            122,
+                            213,
+                          ).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -75,7 +80,7 @@ class MinimalConfirmDialog extends StatelessWidget {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Text(
-                          'Salir',
+                          'Si',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w500,

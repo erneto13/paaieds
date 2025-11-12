@@ -114,8 +114,8 @@ class SectionSummaryCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       improved
-                          ? 'Tu nivel ha mejorado, sigue así 🎯'
-                          : 'Aún puedes reforzar algunos conceptos 💪',
+                          ? 'Tu nivel ha mejorado, sigue así'
+                          : 'Aún puedes reforzar algunos conceptos',
                       style: TextStyle(
                         color: improved
                             ? Colors.green[800]

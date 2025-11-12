@@ -11,6 +11,7 @@ class TheoryScreen extends StatefulWidget {
   final TheoryContent theoryContent;
   final VoidCallback onContinue;
   final VoidCallback? onCancel;
+  final bool? isReviewOnly;
 
   const TheoryScreen({
     super.key,
@@ -18,6 +19,7 @@ class TheoryScreen extends StatefulWidget {
     required this.theoryContent,
     required this.onContinue,
     this.onCancel,
+    this.isReviewOnly,
   });
 
   @override
@@ -426,10 +428,17 @@ class _TheoryScreenState extends State<TheoryScreen> {
                 borderRadius: BorderRadius.circular(14),
               ),
             ),
-            icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
-            label: const Text(
-              'Entendido, continuar con ejercicios',
-              style: TextStyle(
+            icon: Icon(
+              widget.isReviewOnly == true
+                  ? Icons.close
+                  : Icons.check_circle_rounded,
+              color: Colors.white,
+            ),
+            label: Text(
+              widget.isReviewOnly == true
+                  ? 'Cerrar'
+                  : 'Entendido, continuar con ejercicios',
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
                 fontWeight: FontWeight.w700,

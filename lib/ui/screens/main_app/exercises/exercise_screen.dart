@@ -40,11 +40,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadTheory();
+      _checkSectionStatus();
     });
   }
 
-  Future<void> _loadTheory() async {
+  Future<void> _checkSectionStatus() async {
     final exerciseProvider = Provider.of<ExerciseProvider>(
       context,
       listen: false,
@@ -59,29 +59,18 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final userId = authProvider.currentUser?.uid;
     final roadmapId = roadmapProvider.currentRoadmap?.id;
 
-    if (userId == null || userId.isEmpty) {
+    if (userId == null || roadmapId == null) {
       if (!mounted) return;
       CustomSnackbar.showError(
         context: context,
         message: 'Error de autenticación',
-        description: 'No se encontró el usuario autenticado',
+        description: 'No se encontró información del usuario',
       );
       Navigator.pop(context);
       return;
     }
 
-    if (roadmapId == null || roadmapId.isEmpty) {
-      if (!mounted) return;
-      CustomSnackbar.showError(
-        context: context,
-        message: 'Error de roadmap',
-        description: 'No se encontró el roadmap actual',
-      );
-      Navigator.pop(context);
-      return;
-    }
-
-    final success = await exerciseProvider.generateTheoryContent(
+    final theorySuccess = await exerciseProvider.generateTheoryContent(
       userId: userId,
       roadmapId: roadmapId,
       section: widget.section,
@@ -90,7 +79,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
     if (!mounted) return;
 
-    if (!success) {
+    if (!theorySuccess) {
       CustomSnackbar.showError(
         context: context,
         message: 'Error al cargar contenido',
@@ -100,10 +89,33 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       return;
     }
 
-    _showTheoryScreen();
+    final exercisesSuccess = await exerciseProvider.generateExercisesForSection(
+      userId: userId,
+      roadmapId: roadmapId,
+      section: widget.section,
+      currentTheta: widget.currentTheta,
+    );
+
+    if (!mounted) return;
+
+    if (!exercisesSuccess) {
+      CustomSnackbar.showError(
+        context: context,
+        message: 'Error al cargar ejercicios',
+        description: exerciseProvider.errorMessage ?? 'Intenta más tarde.',
+      );
+      Navigator.pop(context);
+      return;
+    }
+
+    if (!exerciseProvider.isSectionAlreadyCompleted) {
+      _showTheoryScreen();
+    } else {
+      setState(() => _theoryShown = true);
+    }
   }
 
-  void _showTheoryScreen() {
+  void _showTheoryScreen({bool skipLoadExercises = false}) {
     final exerciseProvider = Provider.of<ExerciseProvider>(
       context,
       listen: false,
@@ -117,17 +129,26 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         builder: (_) => TheoryScreen(
           section: widget.section,
           theoryContent: exerciseProvider.theoryContent!,
-          onContinue: () {
-            Navigator.pop(context);
-            _loadExercises();
-          },
+          isReviewOnly: skipLoadExercises,
+          onContinue: skipLoadExercises
+              ? () => Navigator.pop(context)
+              : () {
+                  Navigator.pop(context);
+                  _loadExercises();
+                },
           onCancel: () {
             Navigator.pop(context);
-            Navigator.pop(context);
+            if (!skipLoadExercises) {
+              Navigator.pop(context);
+            }
           },
         ),
       ),
-    );
+    ).then((_) {
+      if (!_theoryShown && !skipLoadExercises && mounted) {
+        Navigator.pop(context);
+      }
+    });
   }
 
   Future<void> _loadExercises() async {
@@ -296,8 +317,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         final confirm = await showDialog<bool>(
           context: context,
           builder: (context) => MinimalConfirmDialog(
-            title: 'Salir de los ejercicios',
-            content: '¿Seguro que quieres salir? Tu progreso no se guardará.',
+            title: 'Salir de la sección',
+            content: '¿Seguro que quieres salir? Tu progreso se guardará.',
             onConfirm: () {
               Navigator.pop(context, true);
             },
@@ -314,9 +335,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => MinimalConfirmDialog(
-                title: 'Salir de los ejercicios',
-                content:
-                    '¿Seguro que quieres salir? Tu progreso no se guardará.',
+                title: 'Salir de la sección',
+                content: '¿Seguro que quieres salir? Tu progreso se guardará.',
                 onConfirm: () {
                   Navigator.pop(context, true);
                 },
@@ -363,7 +383,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            'Preparando contenido teórico...',
+            'Espere, por favor...\nCargando información...',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey[600],
@@ -572,6 +593,24 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () =>
+                            _showTheoryScreen(skipLoadExercises: true),
+                        icon: const Icon(Icons.school, size: 18),
+                        label: const Text('Revisar teoría'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.blue[700],
+                          side: BorderSide(
+                            color: Colors.blue.shade300,
+                            width: 1.5,
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -592,26 +631,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   Future<void> _handleRetrySection(ExerciseProvider provider) async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('¿Reintentar sección?'),
-        content: const Text(
-          'Se generarán nuevos ejercicios y tu progreso anterior se reiniciará. '
-          '¿Deseas continuar?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: const Text(
-              'Reintentar',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
+      barrierDismissible: false,
+      builder: (context) => MinimalConfirmDialog(
+        title: '¿Reintentar sección?',
+        content:
+            'Se generarán nuevos ejercicios y tu progreso anterior se reiniciará.\n¿Deseas continuar?',
+        onConfirm: () {
+          Navigator.pop(context, true);
+        },
       ),
     );
 
