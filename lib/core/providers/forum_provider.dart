@@ -94,6 +94,8 @@ class ForumProvider extends ChangeNotifier {
   Future<bool> loadPost(String postId) async {
     _isLoading = true;
     _errorMessage = null;
+    _currentPost = null;
+    _currentPostReplies = [];
     notifyListeners();
 
     try {
@@ -108,30 +110,27 @@ class ForumProvider extends ChangeNotifier {
 
       _currentPost = post;
 
-      //cancel previous subscription if exists
       await _repliesSubscription?.cancel();
 
-      //load replies with stream
       _repliesSubscription = _forumService
           .getRepliesStream(postId)
           .listen(
             (replies) {
               _currentPostReplies = replies;
-              //use post frame callback to avoid setState during build
+              _isLoading = false;
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 notifyListeners();
               });
             },
             onError: (error) {
               _errorMessage = 'Error al cargar respuestas: $error';
+              _isLoading = false; //y también aquí en caso de error
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 notifyListeners();
               });
             },
           );
 
-      _isLoading = false;
-      notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = 'Error al cargar post: $e';
@@ -219,7 +218,6 @@ class ForumProvider extends ChangeNotifier {
     _currentPost = null;
     _currentPostReplies = [];
     _repliesSubscription?.cancel();
-    notifyListeners();
   }
 
   void clearError() {
