@@ -57,25 +57,22 @@ class ForumService {
   }
 
   //eliminar un post
-  //en forum_service.dart
   Future<bool> deletePost(String postId) async {
     try {
-      //eliminar todas las respuestas primero
       final repliesSnapshot = await _firestore
           .collection('forum_replies')
           .where('postId', isEqualTo: postId)
           .get();
 
       for (final doc in repliesSnapshot.docs) {
-        await doc.reference.delete(); // <-- PROBLEMA POTENCIAL
+        await doc.reference.delete();
       }
 
-      //eliminar el post
       await _firestore.collection('forum_posts').doc(postId).delete();
 
       return true;
     } catch (e) {
-      return false; // <-- Si algo falla, devuelve false
+      return false;
     }
   }
 

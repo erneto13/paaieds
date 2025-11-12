@@ -24,7 +24,6 @@ class ForumProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  //cargar posts
   void loadPosts() {
     _isLoading = true;
     notifyListeners();
@@ -51,7 +50,6 @@ class ForumProvider extends ChangeNotifier {
     );
   }
 
-  //crear post
   Future<bool> createPost({
     required String authorId,
     required String authorName,
@@ -90,13 +88,13 @@ class ForumProvider extends ChangeNotifier {
     }
   }
 
-  //cargar un post especifico y sus respuestas
   Future<bool> loadPost(String postId) async {
-    _isLoading = true;
-    _errorMessage = null;
-    _currentPost = null;
-    _currentPostReplies = [];
-    notifyListeners();
+    // Only show loading if we don't have a current post yet
+    if (_currentPost?.id != postId) {
+      _isLoading = true;
+      _errorMessage = null;
+      notifyListeners();
+    }
 
     try {
       final post = await _forumService.getPost(postId);
@@ -104,13 +102,20 @@ class ForumProvider extends ChangeNotifier {
       if (post == null) {
         _errorMessage = 'Post no encontrado';
         _isLoading = false;
+        _currentPost = null;
+        _currentPostReplies = [];
         notifyListeners();
         return false;
       }
 
       _currentPost = post;
 
+      // Cancel previous subscription before creating new one
       await _repliesSubscription?.cancel();
+      _repliesSubscription = null;
+
+      // Small delay to ensure cancellation is complete
+      await Future.delayed(const Duration(milliseconds: 100));
 
       _repliesSubscription = _forumService
           .getRepliesStream(postId)
@@ -118,6 +123,7 @@ class ForumProvider extends ChangeNotifier {
             (replies) {
               _currentPostReplies = replies;
               _isLoading = false;
+              _errorMessage = null;
               WidgetsBinding.instance.addPostFrameCallback((_) {
                 notifyListeners();
               });
@@ -129,6 +135,7 @@ class ForumProvider extends ChangeNotifier {
                 notifyListeners();
               });
             },
+            cancelOnError: false, // Keep listening even after errors
           );
 
       return true;
@@ -140,7 +147,6 @@ class ForumProvider extends ChangeNotifier {
     }
   }
 
-  //crear respuesta
   Future<bool> createReply({
     required String postId,
     required String authorId,
@@ -160,6 +166,10 @@ class ForumProvider extends ChangeNotifier {
       );
 
       final replyId = await _forumService.createReply(reply);
+
+      // No need to manually update _currentPostReplies
+      // The stream will handle it automatically
+
       return replyId != null;
     } catch (e) {
       _errorMessage = 'Error al crear respuesta: $e';
@@ -168,13 +178,11 @@ class ForumProvider extends ChangeNotifier {
     }
   }
 
-  //eliminar post
   Future<bool> deletePost(String postId) async {
     try {
       final success = await _forumService.deletePost(postId);
 
       if (success) {
-        //use post frame callback to avoid setState during build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _posts.removeWhere((p) => p.id == postId);
           notifyListeners();
@@ -191,13 +199,11 @@ class ForumProvider extends ChangeNotifier {
     }
   }
 
-  //eliminar respuesta
   Future<bool> deleteReply(String replyId, String postId) async {
     try {
       final success = await _forumService.deleteReply(replyId, postId);
 
       if (success) {
-        //use post frame callback to avoid setState during build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _currentPostReplies.removeWhere((r) => r.id == replyId);
           notifyListeners();
@@ -218,6 +224,7 @@ class ForumProvider extends ChangeNotifier {
     _currentPost = null;
     _currentPostReplies = [];
     _repliesSubscription?.cancel();
+    _repliesSubscription = null;
   }
 
   void clearError() {
