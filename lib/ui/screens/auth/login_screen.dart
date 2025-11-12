@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:paaieds/core/providers/auth_provider.dart';
+import 'package:paaieds/ui/screens/main_app/main_navigation.dart';
 import 'package:provider/provider.dart';
 import 'package:paaieds/config/app_colors.dart';
 import 'package:paaieds/ui/screens/auth/register_screen.dart';
@@ -49,7 +50,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (!mounted) return;
 
-    if (!success) {
+    if (success) {
+      //navegar limpiando el stack de navegacion
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
+      );
+    } else {
       CustomSnackbar.showError(
         context: context,
         message: 'Error de autenticación',

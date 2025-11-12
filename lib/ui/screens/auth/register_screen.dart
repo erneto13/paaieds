@@ -102,13 +102,15 @@ class _RegisterScreenState extends State<RegisterScreen>
         description: 'Ahora puedes iniciar sesión con tu cuenta.',
       );
 
-      await Future.delayed(const Duration(seconds: 1));
+      //esperar un momento antes de navegar
+      await Future.delayed(const Duration(milliseconds: 800));
 
       if (!context.mounted) return;
 
-      Navigator.pushReplacement(
-        context,
+      //navegar y remover todas las rutas anteriores
+      Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
       );
     } else {
       CustomSnackbar.showError(

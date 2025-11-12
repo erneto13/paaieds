@@ -4,19 +4,17 @@ import 'package:paaieds/core/models/user.dart';
 import 'package:paaieds/core/services/auth_service.dart';
 import 'package:paaieds/core/services/user_service.dart';
 
-//provider para manejar todo lo relacionado con autenticacion
 class AuthProvider extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
 
   UserModel? _currentUser;
-  // ignore: unused_field
   bool _isLoading = true;
-  final bool _isAuthLoading = false; //para operaciones como login/register
+  final bool _isAuthLoading = false;
   String? _errorMessage;
 
   UserModel? get currentUser => _currentUser;
-  bool get isLoading => _isAuthLoading; //para operaciones de auth
+  bool get isLoading => _isAuthLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _currentUser != null;
 
@@ -24,13 +22,13 @@ class AuthProvider extends ChangeNotifier {
     _initAuthListener();
   }
 
-  //escucha cambios en el estado de autenticacion de firebase
   void _initAuthListener() {
     _authService.authStateChanges.listen((User? firebaseUser) async {
       if (firebaseUser != null) {
         await _loadUserData(firebaseUser.uid);
       } else {
         _currentUser = null;
+        _isLoading = false;
         notifyListeners();
       }
     });
@@ -41,9 +39,11 @@ class AuthProvider extends ChangeNotifier {
     try {
       final user = await _userService.getCurrentUser();
       _currentUser = user;
+      _isLoading = false;
       notifyListeners();
     } catch (e) {
       _errorMessage = 'Error al cargar datos del usuario: $e';
+      _isLoading = false;
       notifyListeners();
     }
   }
@@ -55,7 +55,6 @@ class AuthProvider extends ChangeNotifier {
     required String firstName,
     required String lastName,
   }) async {
-    _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
@@ -67,15 +66,14 @@ class AuthProvider extends ChangeNotifier {
         lastName: lastName,
       );
 
+      //cerrar sesion automaticamente despues del registro
       await _authService.signOut();
-      
+
       _currentUser = null;
-      _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      _isLoading = false;
       notifyListeners();
       return false;
     }
@@ -86,7 +84,6 @@ class AuthProvider extends ChangeNotifier {
     required String email,
     required String password,
   }) async {
-    _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
@@ -97,12 +94,10 @@ class AuthProvider extends ChangeNotifier {
       );
 
       _currentUser = userModel;
-      _isLoading = false;
       notifyListeners();
       return true;
     } catch (e) {
       _errorMessage = e.toString();
-      _isLoading = false;
       notifyListeners();
       return false;
     }
